@@ -7,8 +7,8 @@
     <ProjectGuid>{4E341D6D-EC35-46A7-A6E3-82DC6567359D}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PatientArrivalGenerator</RootNamespace>
-    <AssemblyName>PatientArrivalGenerator</AssemblyName>
+    <RootNamespace>PatientGenerator</RootNamespace>
+    <AssemblyName>PatientGenerator</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
