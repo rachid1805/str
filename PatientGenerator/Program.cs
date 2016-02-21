@@ -24,7 +24,11 @@ namespace PatientGenerator
       int periodOfTimeMs = int.Parse(args[2]);
 
       // Creates or overwrites the specified file
-      File.Create(pathFile);
+      var fileStream = File.Create(pathFile);
+
+      while (true)
+      {
+      }
     }
   }
 }

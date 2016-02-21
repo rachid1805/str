@@ -4,17 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4E341D6D-EC35-46A7-A6E3-82DC6567359D}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{195C676C-5B66-446E-86FC-1F39FC6AB7A5}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PatientGenerator</RootNamespace>
-    <AssemblyName>PatientGenerator</AssemblyName>
+    <RootNamespace>Patient</RootNamespace>
+    <AssemblyName>Patient</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -24,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -43,18 +40,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IPatientGenerator.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="IPatientArrival.cs" />
+    <Compile Include="IPatientCare.cs" />
+    <Compile Include="IPatientLeaving.cs" />
+    <Compile Include="PatientArrival.cs" />
+    <Compile Include="PatientCare.cs" />
+    <Compile Include="PatientLeaving.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Patient\Patient.csproj">
-      <Project>{195c676c-5b66-446e-86fc-1f39fc6ab7a5}</Project>
-      <Name>Patient</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
