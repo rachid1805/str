@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Patient;
+using System.Diagnostics;
 
 namespace PatientGenerator
 {
@@ -24,10 +26,19 @@ namespace PatientGenerator
       int periodOfTimeMs = int.Parse(args[2]);
 
       // Creates or overwrites the specified file
-      var fileStream = File.Create(pathFile);
+      //var fileStream = File.Create(pathFile);
 
-      while (true)
+      // Generation test
+      var iteration = 0;
+      while (iteration++ < 100)
       {
+        var generator = new PatientGenerator();
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+        var patient = generator.GeneratePatientArrival();
+        sw.Stop();
+        long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
+        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " genere a l'iteration " + iteration + " en " + microseconds + " us");
       }
     }
   }
