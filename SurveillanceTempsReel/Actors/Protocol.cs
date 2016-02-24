@@ -14,10 +14,19 @@ namespace SurveillanceTempsReel.Actors
     {
         AvgTimeToSeeADoctor,
         AvgAppointmentDuration,
-        CommonColdCount,
-        AllergyCount,
-        // TODO.. trouver autres maladies
+        IllnessCount,
     }
+
+    public enum IllnessType
+    {
+        CommonCold,
+        Allergy,
+        // TODO... autre?
+    }
+
+    public class GatherStats { }
+
+    public class FetchHostpitalEvents { }
 
     public class Watch
     {
@@ -62,6 +71,26 @@ namespace SurveillanceTempsReel.Actors
         {
             Subscriber = subscriber;
             Statistic = stat;
+        }
+    }
+
+    public class SubscribeEventFetcher
+    {
+        public IActorRef Subscriber { get; private set; }
+
+        public SubscribeEventFetcher( IActorRef subscriber )
+        {
+            Subscriber = subscriber;
+        }
+    }
+
+    public class UnsubscribeEventFetcher
+    {
+        public IActorRef Subscriber { get; private set; }
+
+        public UnsubscribeEventFetcher( IActorRef subscriber )
+        {
+            Subscriber = subscriber;
         }
     }
 }
