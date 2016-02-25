@@ -29,10 +29,10 @@ namespace PatientGenerator
       //var fileStream = File.Create(pathFile);
 
       // Generation test
+      var generator = new PatientGenerator();
       var iteration = 0;
       while (iteration++ < 100)
       {
-        var generator = new PatientGenerator();
         Stopwatch sw = new Stopwatch();
         sw.Start();
         var patient = generator.GeneratePatientArrival();

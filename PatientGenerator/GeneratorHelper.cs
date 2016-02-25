@@ -25,12 +25,19 @@ namespace PatientGenerator
       return "0123456789".Random(length);
     }
 
+    public static int RandomNumericalValue(int maxLength)
+    {
+      return random.Next(maxLength);
+    }
+
     private static string Random(this string chars, int length)
     {
       var randomString = new StringBuilder();
 
       for (int i = 0; i < length; i++)
+      {
         randomString.Append(chars[random.Next(chars.Length)]);
+      }
 
       return randomString.ToString();
     }
