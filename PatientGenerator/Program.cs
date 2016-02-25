@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Patient;
 using System.Diagnostics;
+using System.Threading;
 
 namespace PatientGenerator
 {
@@ -31,6 +32,8 @@ namespace PatientGenerator
       // Generation test
       var generator = new PatientGenerator();
       var iteration = 0;
+      Console.WriteLine("Patient Arrival");
+      Console.WriteLine("---------------");
       while (++iteration < 100)
       {
         Stopwatch sw = new Stopwatch();
@@ -39,6 +42,38 @@ namespace PatientGenerator
         sw.Stop();
         long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
         Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.DiseaseType + " " + patient.ArrivalTime + " : " + iteration + " en " + microseconds + " us");
+      }
+
+      Thread.Sleep(2000);
+
+      iteration = 0;
+      Console.WriteLine("");
+      Console.WriteLine("Patient Care");
+      Console.WriteLine("------------");
+      while (++iteration < 100)
+      {
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+        var patient = generator.GeneratePatientCare();
+        sw.Stop();
+        long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
+        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.DoctorId + " " + patient.CareTime + " : " + iteration + " en " + microseconds + " us");
+      }
+
+      Thread.Sleep(2000);
+
+      iteration = 0;
+      Console.WriteLine("");
+      Console.WriteLine("Patient Leaving");
+      Console.WriteLine("---------------");
+      while (++iteration < 100)
+      {
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+        var patient = generator.GeneratePatientLeaving();
+        sw.Stop();
+        long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
+        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.LeavingTime + " : " + iteration + " en " + microseconds + " us");
       }
     }
   }

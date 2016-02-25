@@ -60,11 +60,11 @@ namespace PatientGenerator
       // Assign doctors to each hospital
       foreach(var hospitalName in _hospitals)
       {
-        var numberOfDoctors = GeneratorHelper.RandomNumericalValue(1, 10);
+        var numberOfDoctors = GeneratorHelper.RandomNumericalValue(10, 50);
         var doctorsList = new List<string>(numberOfDoctors);
         for (var i = 0; i < numberOfDoctors; ++i)
         {
-          doctorsList.Add(GeneratorHelper.RandomUpperChars(3) + GeneratorHelper.RandomNumericalValue(3));
+          doctorsList.Add(GeneratorHelper.RandomUpperChars(3) + GeneratorHelper.RandomNumericalChars(3));
         }
         _freeDoctors.Add(hospitalName, doctorsList);
         _busyDoctors.Add(hospitalName, new List<string>());
@@ -97,9 +97,22 @@ namespace PatientGenerator
 
     public IPatientCare GeneratePatientCare()
     {
+      var atLeasteOneFreeDoctor = false;
       if (_patientsArrival.Count == 0)
       {
         throw new ApplicationException("No patient in the arrival list");
+      }
+      foreach (var doctor in _freeDoctors)
+      {
+        if (doctor.Value.Count != 0)
+        {
+          atLeasteOneFreeDoctor = true;
+          break;
+        }
+      }
+      if (!atLeasteOneFreeDoctor)
+      {
+        throw new ApplicationException("No doctor available");
       }
 
       IPatientCare patientCare = null;
@@ -115,7 +128,7 @@ namespace PatientGenerator
         if (freeDoctorsForThisHospital.Count != 0)
         {
           // Choose one free doctor
-          var doctorId = freeDoctorsForThisHospital[GeneratorHelper.RandomNumericalValue(_freeDoctors.Values.Count)];
+          var doctorId = freeDoctorsForThisHospital[GeneratorHelper.RandomNumericalValue(freeDoctorsForThisHospital.Count)];
 
           // Add this doctor to the busy list
           _busyDoctors[patientArrival.HospitalId].Add(doctorId);
