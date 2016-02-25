@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Patient;
 using System.IO;
 using System.Reflection;
@@ -22,13 +20,19 @@ namespace PatientGenerator
     private const string HospitalsTag = "Hospitals";
     private const string HospitalTag = "Hospital";
     private const string IdTag = "Id";
+    private const string NameTag = "Name";
     private const string HostpitalIdsFile = "HospitalIds.xml";
 
     #endregion
 
     #region Attributes
 
-    private IList<string> HospitalIds;
+    private readonly IList<string> _hospitals;
+    private readonly IDictionary<string, IList<string>> _freeDoctors;
+    private readonly IDictionary<string, IList<string>> _busyDoctors;
+    private readonly IDictionary<int, IPatientArrival> _patientsArrival;
+    private readonly IDictionary<int, IPatientCare> _patientsCare;
+    private readonly IDictionary<int, IPatientLeaving> _patientsLeaving;
 
     #endregion
 
@@ -36,7 +40,12 @@ namespace PatientGenerator
 
     public PatientGenerator()
     {
-      HospitalIds = new List<string>();
+      _hospitals = new List<string>();
+      _freeDoctors = new Dictionary<string, IList<string>>();
+      _busyDoctors = new Dictionary<string, IList<string>>();
+      _patientsArrival = new Dictionary<int, IPatientArrival>();
+      _patientsCare = new Dictionary<int, IPatientCare>();
+      _patientsLeaving = new Dictionary<int, IPatientLeaving>();
 
       var xmlFileDir = Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath);
       if (xmlFileDir == null)
@@ -44,7 +53,22 @@ namespace PatientGenerator
         throw new DirectoryNotFoundException("Could not find the specified directory");
       }
       var xmlFilepath = Path.Combine(xmlFileDir, HostpitalIdsFile);
+
+      // Populates Hostpitals from the xml file
       ReadXmlFile(xmlFilepath);
+
+      // Assign doctors to each hospital
+      foreach(var hospitalName in _hospitals)
+      {
+        var numberOfDoctors = GeneratorHelper.RandomNumericalValue(1, 10);
+        var doctorsList = new List<string>(numberOfDoctors);
+        for (var i = 0; i < numberOfDoctors; ++i)
+        {
+          doctorsList.Add(GeneratorHelper.RandomUpperChars(3) + GeneratorHelper.RandomNumericalValue(3));
+        }
+        _freeDoctors.Add(hospitalName, doctorsList);
+        _busyDoctors.Add(hospitalName, new List<string>());
+      }
     }
 
     #endregion
@@ -53,20 +77,91 @@ namespace PatientGenerator
 
     public IPatientArrival GeneratePatientArrival()
     {
-      return new PatientArrival(GeneratorHelper.RandomUpperChars(4) + GeneratorHelper.RandomNumericalChars(8),
-                                HospitalIds[GeneratorHelper.RandomNumericalValue(HospitalIds.Count)],
-                                DateTime.Now,
-                                DiseaseType.Influenza);
+      var patientId = GeneratorHelper.RandomNumericalValue(1000);
+
+      while (_patientsArrival.Keys.Contains(patientId))
+      {
+        patientId = GeneratorHelper.RandomNumericalValue(1000);
+      }
+
+      var patientArrival = new PatientArrival(GeneratorHelper.RandomUpperChars(4) + GeneratorHelper.RandomNumericalChars(8),
+                                              _hospitals[GeneratorHelper.RandomNumericalValue(_hospitals.Count)],
+                                              DateTime.Now,
+                                              (DiseaseType)GeneratorHelper.RandomNumericalValue((int)DiseaseType.Max));
+
+      // Keep the new generated patient in the arrival list
+      _patientsArrival.Add(patientId, patientArrival);
+
+      return patientArrival;
     }
 
     public IPatientCare GeneratePatientCare()
     {
-      return new PatientCare("", "", DateTime.Now, "");
+      if (_patientsArrival.Count == 0)
+      {
+        throw new ApplicationException("No patient in the arrival list");
+      }
+
+      IPatientCare patientCare = null;
+      var freeDoctor = false;
+
+      while (!freeDoctor)
+      {
+        // Take a patient from the waiting list
+        var patientId = _patientsArrival.Keys.ToList()[GeneratorHelper.RandomNumericalValue(_patientsArrival.Count)];
+        var patientArrival = _patientsArrival[patientId];
+        var freeDoctorsForThisHospital = _freeDoctors[patientArrival.HospitalId];
+
+        if (freeDoctorsForThisHospital.Count != 0)
+        {
+          // Choose one free doctor
+          var doctorId = freeDoctorsForThisHospital[GeneratorHelper.RandomNumericalValue(_freeDoctors.Values.Count)];
+
+          // Add this doctor to the busy list
+          _busyDoctors[patientArrival.HospitalId].Add(doctorId);
+
+          // Remove this doctor from the free list
+          _freeDoctors[patientArrival.HospitalId].Remove(doctorId);
+
+          // Keep the new generated patient in the care list
+          patientCare = new PatientCare(patientArrival.PatientId, patientArrival.HospitalId, DateTime.Now, doctorId);
+          _patientsCare.Add(patientId, patientCare);
+
+          // Remove this patient from the arrival list
+          _patientsArrival.Remove(patientId);
+
+          freeDoctor = true;
+        }
+      }
+
+      return patientCare;
     }
 
     public IPatientLeaving GeneratePatientLeaving()
     {
-      return new PatientLeaving("", "", DateTime.Now);
+      if (_patientsCare.Count == 0)
+      {
+        throw new ApplicationException("No patient in the care list");
+      }
+
+      // Take a patient from the care list
+      var patientId = _patientsCare.Keys.ToList()[GeneratorHelper.RandomNumericalValue(_patientsCare.Count)];
+      var patientCare = _patientsCare[patientId];
+
+      // Remove this doctor from the busy list
+      _freeDoctors[patientCare.HospitalId].Remove(patientCare.DoctorId);
+
+      // Add this doctor to the free list
+      _freeDoctors[patientCare.HospitalId].Add(patientCare.DoctorId);
+
+      // Keep the new generated patient in the leaving list
+      var patientLeaving = new PatientLeaving(patientCare.PatientId, patientCare.HospitalId, DateTime.Now);
+      _patientsLeaving.Add(patientId, patientLeaving);
+
+      // Remove this patient from the care list
+      _patientsCare.Remove(patientId);
+
+      return patientLeaving;
     }
 
     #endregion
@@ -107,7 +202,7 @@ namespace PatientGenerator
                 break;
               case HospitalTag:
                 hospitalTagFound = true;
-                HospitalIds.Add(ReadHospitalId(xmlReader));
+                _hospitals.Add(ReadHospitalId(xmlReader));
                 break;
             }
           }
@@ -151,16 +246,16 @@ namespace PatientGenerator
       }
     }
 
-    private static string ReadHospitalId(XmlReader xmlReader)
+    private string ReadHospitalId(XmlReader xmlReader)
     {
-      // Read Id attribute
-      var id = xmlReader[IdTag];
-      if (id == null)
+      // Read Name attribute
+      var name = xmlReader[NameTag];
+      if (name == null)
       {
-        throw new ApplicationException("Unrecognized XML file format provided: Id Tag Not Found!!");
+        throw new ApplicationException("Unrecognized XML file format provided: Name Tag Not Found!!");
       }
 
-      return id;
+      return name;
     }
 
     #endregion

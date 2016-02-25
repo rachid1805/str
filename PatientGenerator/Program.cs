@@ -31,14 +31,14 @@ namespace PatientGenerator
       // Generation test
       var generator = new PatientGenerator();
       var iteration = 0;
-      while (iteration++ < 100)
+      while (++iteration < 100)
       {
         Stopwatch sw = new Stopwatch();
         sw.Start();
         var patient = generator.GeneratePatientArrival();
         sw.Stop();
         long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " genere a l'iteration " + iteration + " en " + microseconds + " us");
+        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.DiseaseType + " " + patient.ArrivalTime + " : " + iteration + " en " + microseconds + " us");
       }
     }
   }

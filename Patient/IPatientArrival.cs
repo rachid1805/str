@@ -11,7 +11,8 @@ namespace Patient
     Fracture = 4,
     Gastro = 5,
     Influenza = 6,
-    Cold = 7
+    Cold = 7,
+    Max = 8
   }
 
   public interface IPatientArrival

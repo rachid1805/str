@@ -30,6 +30,11 @@ namespace PatientGenerator
       return random.Next(maxLength);
     }
 
+    public static int RandomNumericalValue(int minValue, int maxValue)
+    {
+      return random.Next(minValue, maxValue);
+    }
+
     private static string Random(this string chars, int length)
     {
       var randomString = new StringBuilder();
