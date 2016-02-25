@@ -55,7 +55,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actors\DashboardActor.cs" />
-    <Compile Include="Actors\HospitalStatisticActor.cs" />
+    <Compile Include="Actors\HospitalEventFetcherActor.cs" />
+    <Compile Include="Actors\StatAvgAppointmentDurationActor.cs" />
+    <Compile Include="Actors\StatAvgTimeToSeeADoctorActor.cs" />
     <Compile Include="Actors\HospitalCoordinatorActor.cs" />
     <Compile Include="Actors\Protocol.cs" />
     <Compile Include="Form1.cs">

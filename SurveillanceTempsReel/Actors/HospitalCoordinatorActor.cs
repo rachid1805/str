@@ -34,11 +34,36 @@ namespace SurveillanceTempsReel.Actors
             {
                 if ( !_hospitalStatActors.ContainsKey( watch.Statistic ) )
                 {
-                    // crée un acteur enfant pour surveiller cette statistique
-                    var statActor = Context.ActorOf( Props.Create( () => new HospitalStatisticActor( hospitalId, hospitalName ) ) );
+                    // pas très évolutif comme code, mais fait l'affaire dans le contexte du projet.
+                    IActorRef statActor = null;
 
+                    if ( watch.Statistic == StatisticType.AvgTimeToSeeADoctor )
+                        statActor = Context.ActorOf( Props.Create( () => new StatAvgTimeToSeeADoctorActor( hospitalId, hospitalName ) ) );
+                    else if ( watch.Statistic == StatisticType.AvgAppointmentDuration )
+                        statActor = Context.ActorOf( Props.Create( () => new StatAvgAppointmentDurationActor( hospitalId, hospitalName ) ) );
+                    else
+                        throw new Exception( $"missing handler for stat type: {watch.Statistic}" );
+                    
                     _hospitalStatActors[ watch.Statistic ] = statActor;
                 }
+
+                // TODO : send message to dashboard actor to register series
+                //_dashboardActor.Tell( )
+
+                // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
+                _hospitalStatActors[ watch.Statistic ].Tell( new SubscribeStatistic( watch.Statistic, _dashboardActor ) );
+            } );
+
+            Receive<Unwatch>( unwatch =>
+            {
+                if ( !_hospitalStatActors.ContainsKey( unwatch.Statistic ) )
+                    return;
+
+                // désabonnement auprès de l'acteur du "dashboard"
+                _hospitalStatActors[ unwatch.Statistic ].Tell( new UnsubscribeStatistic( unwatch.Statistic, _dashboardActor ) );
+
+                // TODO : remove series
+                //_dashboardActor.Tell( )
             } );
         }
     }
