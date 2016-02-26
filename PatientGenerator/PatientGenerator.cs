@@ -97,7 +97,7 @@ namespace PatientGenerator
 
     public IPatientCare GeneratePatientCare()
     {
-      var atLeasteOneFreeDoctor = false;
+      var atLeastOneFreeDoctor = false;
       if (_patientsArrival.Count == 0)
       {
         throw new ApplicationException("No patient in the arrival list");
@@ -106,11 +106,11 @@ namespace PatientGenerator
       {
         if (doctor.Value.Count != 0)
         {
-          atLeasteOneFreeDoctor = true;
+          atLeastOneFreeDoctor = true;
           break;
         }
       }
-      if (!atLeasteOneFreeDoctor)
+      if (!atLeastOneFreeDoctor)
       {
         throw new ApplicationException("No doctor available");
       }
