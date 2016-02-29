@@ -18,6 +18,7 @@ namespace PatientGenerator
 
     private const string HospitalsTag = "Hospitals";
     private const string HospitalTag = "Hospital";
+    private const string IdTag = "Id";
     private const string NameTag = "Name";
     private const string DoctorsTag = "Doctors";
     private const string HostpitalIdsFile = "HospitalIds.xml";
@@ -34,12 +35,12 @@ namespace PatientGenerator
 
     #region Attributes
 
-    private readonly IDictionary<string, int> _hospitals;
-    private readonly IDictionary<string, IList<string>> _freeDoctors;
-    private readonly IDictionary<string, IList<string>> _busyDoctors;
-    private readonly IDictionary<int, IPatientArrival> _patientsArrival;
-    private readonly IDictionary<int, IPatientTakenInChargeByDoctor> _patientsTakenInChargeByDoctor;
-    private readonly IDictionary<int, IPatientLeaving> _patientsLeaving;
+    private readonly IDictionary<Hospital, int> _hospitals;
+    private readonly IDictionary<int, IList<int>> _freeDoctors;
+    private readonly IDictionary<int, IList<int>> _busyDoctors;
+    private readonly IList<IPatientArrival> _patientsArrival;
+    private readonly IList<IPatientTakenInChargeByDoctor> _patientsTakenInChargeByDoctor;
+    private readonly IList<IPatientLeaving> _patientsLeaving;
     private readonly IList<IDisease> _diseases;
 
     #endregion
@@ -48,12 +49,12 @@ namespace PatientGenerator
 
     public PatientGenerator()
     {
-      _hospitals = new Dictionary<string, int>();
-      _freeDoctors = new Dictionary<string, IList<string>>();
-      _busyDoctors = new Dictionary<string, IList<string>>();
-      _patientsArrival = new Dictionary<int, IPatientArrival>();
-      _patientsTakenInChargeByDoctor = new Dictionary<int, IPatientTakenInChargeByDoctor>();
-      _patientsLeaving = new Dictionary<int, IPatientLeaving>();
+      _hospitals = new Dictionary<Hospital, int>();
+      _freeDoctors = new Dictionary<int, IList<int>>();
+      _busyDoctors = new Dictionary<int, IList<int>>();
+      _patientsArrival = new List<IPatientArrival>();
+      _patientsTakenInChargeByDoctor = new List<IPatientTakenInChargeByDoctor>();
+      _patientsLeaving = new List<IPatientLeaving>();
       _diseases = new List<IDisease>();
 
       var xmlFileDir = Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath);
@@ -74,13 +75,13 @@ namespace PatientGenerator
       foreach (var hospital in _hospitals)
       {
         var numberOfDoctors = hospital.Value;
-        var doctorsList = new List<string>(numberOfDoctors);
+        var doctorsList = new List<int>(numberOfDoctors);
         for (var i = 0; i < numberOfDoctors; ++i)
         {
-          doctorsList.Add(GeneratorHelper.RandomUpperChars(3) + GeneratorHelper.RandomNumericalChars(3));
+          doctorsList.Add(GeneratorHelper.RandomNumericalValue(int.MaxValue));
         }
-        _freeDoctors.Add(hospital.Key, doctorsList);
-        _busyDoctors.Add(hospital.Key, new List<string>());
+        _freeDoctors.Add(hospital.Key.Id, doctorsList);
+        _busyDoctors.Add(hospital.Key.Id, new List<int>());
       }
     }
 
@@ -90,20 +91,13 @@ namespace PatientGenerator
 
     public IPatientArrival GeneratePatientArrival()
     {
-      var patientId = GeneratorHelper.RandomNumericalValue(1000);
-
-      while (_patientsArrival.Keys.Contains(patientId))
-      {
-        patientId = GeneratorHelper.RandomNumericalValue(1000);
-      }
-
-      var patientArrival = new PatientArrival(GeneratorHelper.RandomUpperChars(4) + GeneratorHelper.RandomNumericalChars(8),
-                                              _hospitals.Keys.ToList()[GeneratorHelper.RandomNumericalValue(_hospitals.Count)],
+      var patientArrival = new PatientArrival(GeneratorHelper.RandomNumericalValue(int.MaxValue),
+                                              GeneratorHelper.RandomNumericalValue(_hospitals.Count),
                                               _diseases[GeneratorHelper.RandomNumericalValue(_diseases.Count)],
                                               DateTime.Now);
 
       // Keep the new generated patient in the arrival list
-      _patientsArrival.Add(patientId, patientArrival);
+      _patientsArrival.Add(patientArrival);
 
       return patientArrival;
     }
@@ -134,27 +128,29 @@ namespace PatientGenerator
       while (!freeDoctor)
       {
         // Take a patient from the waiting list
-        var patientId = _patientsArrival.Keys.ToList()[GeneratorHelper.RandomNumericalValue(_patientsArrival.Count)];
-        var patientArrival = _patientsArrival[patientId];
-        var freeDoctorsForThisHospital = _freeDoctors[patientArrival.HospitalId];
+        var patientArrival = _patientsArrival[GeneratorHelper.RandomNumericalValue(_patientsArrival.Count)];
+        IList<int> freeDoctorsForThisHospital;
+        _freeDoctors.TryGetValue(patientArrival.HospitalId, out freeDoctorsForThisHospital);
 
-        if (freeDoctorsForThisHospital.Count != 0)
+        if ((freeDoctorsForThisHospital != null) && (freeDoctorsForThisHospital.Count != 0))
         {
           // Choose one free doctor
           var doctorId = freeDoctorsForThisHospital[GeneratorHelper.RandomNumericalValue(freeDoctorsForThisHospital.Count)];
 
           // Add this doctor to the busy list
-          _busyDoctors[patientArrival.HospitalId].Add(doctorId);
+          IList<int> busyDoctorsForThisHospital;
+          _busyDoctors.TryGetValue(patientArrival.HospitalId, out busyDoctorsForThisHospital);
+          busyDoctorsForThisHospital.Add(doctorId);
 
           // Remove this doctor from the free list
-          _freeDoctors[patientArrival.HospitalId].Remove(doctorId);
+          freeDoctorsForThisHospital.Remove(doctorId);
 
           // Keep the new generated patient in the care list
           patientTakenInChargeByDoctor = new PatientTakenInChargeByDoctor(patientArrival.PatientId, patientArrival.HospitalId, DateTime.Now, doctorId);
-          _patientsTakenInChargeByDoctor.Add(patientId, patientTakenInChargeByDoctor);
+          _patientsTakenInChargeByDoctor.Add(patientTakenInChargeByDoctor);
 
           // Remove this patient from the arrival list
-          _patientsArrival.Remove(patientId);
+          _patientsArrival.Remove(patientArrival);
 
           freeDoctor = true;
         }
@@ -171,21 +167,24 @@ namespace PatientGenerator
       }
 
       // Take a patient from the care list
-      var patientId = _patientsTakenInChargeByDoctor.Keys.ToList()[GeneratorHelper.RandomNumericalValue(_patientsTakenInChargeByDoctor.Count)];
-      var patientTakenInChargeByDoctor = _patientsTakenInChargeByDoctor[patientId];
+      var patientTakenInChargeByDoctor = _patientsTakenInChargeByDoctor[GeneratorHelper.RandomNumericalValue(_patientsTakenInChargeByDoctor.Count)];
 
       // Remove this doctor from the busy list
-      _freeDoctors[patientTakenInChargeByDoctor.HospitalId].Remove(patientTakenInChargeByDoctor.DoctorId);
+      IList<int> busyDoctorsForThisHospital;
+      _busyDoctors.TryGetValue(patientTakenInChargeByDoctor.HospitalId, out busyDoctorsForThisHospital);
+      busyDoctorsForThisHospital.Remove(patientTakenInChargeByDoctor.DoctorId);
 
       // Add this doctor to the free list
-      _freeDoctors[patientTakenInChargeByDoctor.HospitalId].Add(patientTakenInChargeByDoctor.DoctorId);
+      IList<int> freeDoctorsForThisHospital;
+      _freeDoctors.TryGetValue(patientTakenInChargeByDoctor.HospitalId, out freeDoctorsForThisHospital);
+      freeDoctorsForThisHospital.Add(patientTakenInChargeByDoctor.DoctorId);
 
       // Keep the new generated patient in the leaving list
       var patientLeaving = new PatientLeaving(patientTakenInChargeByDoctor.PatientId, patientTakenInChargeByDoctor.HospitalId, DateTime.Now);
-      _patientsLeaving.Add(patientId, patientLeaving);
+      _patientsLeaving.Add(patientLeaving);
 
      // Remove this patient from the care list
-     _patientsTakenInChargeByDoctor.Remove(patientId);
+     _patientsTakenInChargeByDoctor.Remove(patientTakenInChargeByDoctor);
 
       return patientLeaving;
     }
@@ -273,6 +272,13 @@ namespace PatientGenerator
 
     private void ReadHospitalId(XmlReader xmlReader)
     {
+      // Read Id attribute
+      var id = xmlReader[IdTag];
+      if (id == null)
+      {
+        throw new ApplicationException("Unrecognized XML file format provided: Id Tag Not Found!!");
+      }
+
       // Read Name attribute
       var name = xmlReader[NameTag];
       if (name == null)
@@ -287,7 +293,7 @@ namespace PatientGenerator
         throw new ApplicationException("Unrecognized XML file format provided: Doctors Tag Not Found!!");
       }
 
-      _hospitals.Add(name, int.Parse(nbOfDoctorsStr));
+      _hospitals.Add(new Hospital { Id = int.Parse(id), Name = name }, int.Parse(nbOfDoctorsStr));
     }
 
     private void ReadDiseaseId(XmlReader xmlReader)

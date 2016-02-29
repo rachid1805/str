@@ -66,24 +66,24 @@ namespace Common.Entities
 
     public interface IPatientArrival
     {
-        string PatientId { get; }               // TODO : change data type to int
-        string HospitalId { get; }              // TODO : change data type to int
+        int PatientId { get; }
+        int HospitalId { get; }
         DateTime ArrivalTime { get; }
         IDisease Disease { get; }
     }
 
     public interface IPatientTakenInChargeByDoctor
     {
-        string PatientId { get; }           // TODO : change data type to int
-        string HospitalId { get; }          // TODO : change data type to int
+        int PatientId { get; }
+        int HospitalId { get; }
         DateTime TakenInChargeByDoctorTime { get; }
-        string DoctorId { get; }
+        int DoctorId { get; }
     }
 
     public interface IPatientLeaving
     {
-        string PatientId { get; }               // TODO : change data type to int
-        string HospitalId { get; }              // TODO : change data type to int
+        int PatientId { get; }
+        int HospitalId { get; }
         DateTime LeavingTime { get; }
     }
 
@@ -126,7 +126,7 @@ namespace Common.Entities
     {
         #region Constructor
 
-        public PatientArrival(string patientId, string hospitalId, IDisease disease, DateTime arrivalTime)
+        public PatientArrival(int patientId, int hospitalId, IDisease disease, DateTime arrivalTime)
         {
             PatientId = patientId;
             HospitalId = hospitalId;
@@ -138,8 +138,8 @@ namespace Common.Entities
 
         #region IPatientArrival implementation
 
-        public string PatientId { get; private set; }
-        public string HospitalId { get; private set; }
+        public int PatientId { get; private set; }
+        public int HospitalId { get; private set; }
         public DateTime ArrivalTime { get; private set; }
         public IDisease Disease { get; private set; }
 
@@ -150,7 +150,7 @@ namespace Common.Entities
     {
         #region Constructor
 
-        public PatientTakenInChargeByDoctor( string patientId, string hospitalId, DateTime takenInChargeByDoctorTime, string doctorId )
+        public PatientTakenInChargeByDoctor( int patientId, int hospitalId, DateTime takenInChargeByDoctorTime, int doctorId )
         {
             PatientId = patientId;
             HospitalId = hospitalId;
@@ -162,10 +162,10 @@ namespace Common.Entities
 
         #region IPatientTakenInChargeByDoctor implementation
 
-        public string PatientId { get; private set; }
-        public string HospitalId { get; private set; }
+        public int PatientId { get; private set; }
+        public int HospitalId { get; private set; }
         public DateTime TakenInChargeByDoctorTime { get; private set; }
-        public string DoctorId { get; private set; }
+        public int DoctorId { get; private set; }
 
         #endregion
     }
@@ -174,7 +174,7 @@ namespace Common.Entities
     {
         #region Constructor
 
-        public PatientLeaving( string patientId, string hospitalId, DateTime leavingTime )
+        public PatientLeaving( int patientId, int hospitalId, DateTime leavingTime )
         {
             PatientId = patientId;
             HospitalId = hospitalId;
@@ -185,8 +185,8 @@ namespace Common.Entities
 
         #region IPatientLeaving implementation
 
-        public string PatientId { get; private set; }
-        public string HospitalId { get; private set; }
+        public int PatientId { get; private set; }
+        public int HospitalId { get; private set; }
         public DateTime LeavingTime { get; private set; }
 
         #endregion
