@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Document Title="Disease Ids info for simulation mode" Version="1.0">
+  <!--Priority possible values : VeryHigh, High, Medium, Low and VeryLow-->
+  <!--RequiredTimeUnit possible values : Hr, Min, Sec and MilliSec-->
+  <Diseases>
+    <Disease Type="Cardiac" Priority="VeryHigh" RequiredTimeValue="30" RequiredTimeUnit="MilliSec"/>
+    <Disease Type="RespiratoryFailure" Priority="VeryHigh" RequiredTimeValue="25" RequiredTimeUnit="MilliSec"/>
+    <Disease Type="Pneumonia" Priority="High" RequiredTimeValue="20" RequiredTimeUnit="MilliSec"/>
+    <Disease Type="Bronchitis" Priority="High" RequiredTimeValue="20" RequiredTimeUnit="MilliSec"/>
+    <Disease Type="Fracture" Priority="Medium" RequiredTimeValue="15" RequiredTimeUnit="MilliSec"/>
+    <Disease Type="Gastro" Priority="Medium" RequiredTimeValue="10" RequiredTimeUnit="MilliSec"/>
+    <Disease Type="Influenza" Priority="Low" RequiredTimeValue="10" RequiredTimeUnit="MilliSec"/>
+    <Disease Type="Cold" Priority="VeryLow" RequiredTimeValue="5" RequiredTimeUnit="MilliSec"/>
+  </Diseases>
+</Document>

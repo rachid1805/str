@@ -41,23 +41,23 @@ namespace PatientGenerator
         var patient = generator.GeneratePatientArrival();
         sw.Stop();
         long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.DiseaseType + " " + patient.ArrivalTime + " : " + iteration + " en " + microseconds + " us");
+        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.Disease.Type + " " + patient.ArrivalTime + " : " + iteration + " en " + microseconds + " us");
       }
 
       Thread.Sleep(2000);
 
       iteration = 0;
       Console.WriteLine("");
-      Console.WriteLine("Patient Care");
-      Console.WriteLine("------------");
-      while (++iteration < 100)
+      Console.WriteLine("Patient Taken In Charge By Doctor");
+      Console.WriteLine("---------------------------------");
+      while (++iteration < 30)
       {
         Stopwatch sw = new Stopwatch();
         sw.Start();
-        var patient = generator.GeneratePatientCare();
+        var patient = generator.GeneratePatientTakenInChargeByDoctor();
         sw.Stop();
         long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.DoctorId + " " + patient.CareTime + " : " + iteration + " en " + microseconds + " us");
+        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.DoctorId + " " + patient.TakenInChargeByDoctorTime + " : " + iteration + " en " + microseconds + " us");
       }
 
       Thread.Sleep(2000);
@@ -66,7 +66,7 @@ namespace PatientGenerator
       Console.WriteLine("");
       Console.WriteLine("Patient Leaving");
       Console.WriteLine("---------------");
-      while (++iteration < 100)
+      while (++iteration < 20)
       {
         Stopwatch sw = new Stopwatch();
         sw.Start();
