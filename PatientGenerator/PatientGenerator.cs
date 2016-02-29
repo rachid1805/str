@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Patient;
 using System.IO;
 using System.Reflection;
 using System.Xml;
+using Common.Entities;
 
 namespace PatientGenerator
 {

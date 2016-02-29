@@ -17,12 +17,7 @@ namespace SurveillanceTempsReel.Actors
         IllnessCount,
     }
 
-    public enum IllnessType
-    {
-        CommonCold,
-        Allergy,
-        // TODO... autre?
-    }
+    #region Message types
 
     public class GatherStats { }
 
@@ -93,4 +88,6 @@ namespace SurveillanceTempsReel.Actors
             Subscriber = subscriber;
         }
     }
+
+    #endregion
 }

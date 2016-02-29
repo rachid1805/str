@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Akka.Actor;
+using Common.Helpers;
 
 namespace SurveillanceTempsReel.Actors
 {
@@ -18,12 +19,15 @@ namespace SurveillanceTempsReel.Actors
         private readonly HashSet<IActorRef> _subscriptions;
         private readonly ICancelable _cancelFetching;
 
+        private int _lastEventId;
+
         public HospitalEventFetcherActor( uint hospitalId, string connectionString )
         {
             _hospitalId = hospitalId;
             _connectionString = connectionString;
             _subscriptions = new HashSet<IActorRef>();
             _cancelFetching = new Cancelable( Context.System.Scheduler );
+            _lastEventId = 0;
 
             Fetching();
         }
@@ -67,8 +71,10 @@ namespace SurveillanceTempsReel.Actors
         {
             Receive<FetchHostpitalEvents>( bof =>
             {
-                // TODO  : fetch from sql database & send to recipients
+                // TODO : maybe change hospitalId type to int... enough for project
+                var hospitalEvents = MedWatchDAL.FindHospitalEventsAfter( (int) _hospitalId, afterEventId: _lastEventId );
 
+                // TODO convert to actor messages and propagate into system
             } );
 
             Receive<SubscribeEventFetcher>( sc =>
