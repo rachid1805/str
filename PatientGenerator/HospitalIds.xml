@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Document Title="Hospital Ids info for simulation mode" Version="1.0">
   <Hospitals>
-    <Hospital Name="Sainte-Justine"/>
-    <Hospital Name="Maisonneuve-Rosemont"/>
-    <Hospital Name="Saint-Luc"/>
-    <Hospital Name="Notre-Dame"/>
-    <Hospital Name="Fleury"/>
-    <Hospital Name="Hotel-Dieu"/>
-    <Hospital Name="Sacre-Coeur"/>
-    <Hospital Name="Royal-Victoria"/>
+    <Hospital Name="Sainte-Justine" Doctors="10"/>
+    <Hospital Name="Maisonneuve-Rosemont" Doctors="15"/>
+    <Hospital Name="Saint-Luc" Doctors="8"/>
+    <Hospital Name="Notre-Dame" Doctors="12"/>
+    <Hospital Name="Fleury" Doctors="5"/>
+    <Hospital Name="Hotel-Dieu" Doctors="14"/>
+    <Hospital Name="Sacre-Coeur" Doctors="13"/>
+    <Hospital Name="Royal-Victoria" Doctors="7"/>
   </Hospitals>
 </Document>

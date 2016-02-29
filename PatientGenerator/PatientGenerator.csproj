@@ -59,6 +59,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="DiseaseIds.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="HospitalIds.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

@@ -6,12 +6,12 @@ namespace Patient
   {
     #region Constructor
 
-    public PatientArrival(string patientId, string hospitalId, DateTime arrivalTime, DiseaseType diseaseType)
+    public PatientArrival(string patientId, string hospitalId, IDisease disease, DateTime arrivalTime)
     {
       PatientId = patientId;
       HospitalId = hospitalId;
+      Disease = disease;
       ArrivalTime = arrivalTime;
-      DiseaseType = diseaseType;
     }
 
     #endregion
@@ -21,7 +21,7 @@ namespace Patient
     public string PatientId { get; private set; }
     public string HospitalId { get; private set; }
     public DateTime ArrivalTime { get; private set; }
-    public DiseaseType DiseaseType { get; private set; }
+    public IDisease Disease { get; private set; }
 
     #endregion
   }

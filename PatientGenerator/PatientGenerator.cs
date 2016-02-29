@@ -15,24 +15,32 @@ namespace PatientGenerator
     private const string DocumentTag = "Document";
     private const string DocumentTitleAttribName = "Title";
     private const string DocumentVersionAttribName = "Version";
-    private const string DocumentTitleValue = "Hospital Ids info for simulation mode";
-    private const string DocumentVersionValue = "1.0";
+
     private const string HospitalsTag = "Hospitals";
     private const string HospitalTag = "Hospital";
-    private const string IdTag = "Id";
     private const string NameTag = "Name";
+    private const string DoctorsTag = "Doctors";
     private const string HostpitalIdsFile = "HospitalIds.xml";
+
+    private const string DiseasesTag = "Diseases";
+    private const string DiseaseTag = "Disease";
+    private const string TypeTag = "Type";
+    private const string PriorityTag = "Priority";
+    private const string RequiredTimeValueTag = "RequiredTimeValue";
+    private const string RequiredTimeUnitTag = "RequiredTimeUnit";
+    private const string DiseaseIdsFile = "DiseaseIds.xml";
 
     #endregion
 
     #region Attributes
 
-    private readonly IList<string> _hospitals;
+    private readonly IDictionary<string, int> _hospitals;
     private readonly IDictionary<string, IList<string>> _freeDoctors;
     private readonly IDictionary<string, IList<string>> _busyDoctors;
     private readonly IDictionary<int, IPatientArrival> _patientsArrival;
     private readonly IDictionary<int, IPatientCare> _patientsCare;
     private readonly IDictionary<int, IPatientLeaving> _patientsLeaving;
+    private readonly IList<IDisease> _diseases;
 
     #endregion
 
@@ -40,34 +48,39 @@ namespace PatientGenerator
 
     public PatientGenerator()
     {
-      _hospitals = new List<string>();
+      _hospitals = new Dictionary<string, int>();
       _freeDoctors = new Dictionary<string, IList<string>>();
       _busyDoctors = new Dictionary<string, IList<string>>();
       _patientsArrival = new Dictionary<int, IPatientArrival>();
       _patientsCare = new Dictionary<int, IPatientCare>();
       _patientsLeaving = new Dictionary<int, IPatientLeaving>();
+      _diseases = new List<IDisease>();
 
       var xmlFileDir = Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath);
       if (xmlFileDir == null)
       {
         throw new DirectoryNotFoundException("Could not find the specified directory");
       }
-      var xmlFilepath = Path.Combine(xmlFileDir, HostpitalIdsFile);
 
       // Populates Hostpitals from the xml file
+      var xmlFilepath = Path.Combine(xmlFileDir, HostpitalIdsFile);
+      ReadXmlFile(xmlFilepath);
+
+      // Populates Diseases from the xml file
+      xmlFilepath = Path.Combine(xmlFileDir, DiseaseIdsFile);
       ReadXmlFile(xmlFilepath);
 
       // Assign doctors to each hospital
-      foreach(var hospitalName in _hospitals)
+      foreach (var hospital in _hospitals)
       {
-        var numberOfDoctors = GeneratorHelper.RandomNumericalValue(10, 50);
+        var numberOfDoctors = hospital.Value;
         var doctorsList = new List<string>(numberOfDoctors);
         for (var i = 0; i < numberOfDoctors; ++i)
         {
           doctorsList.Add(GeneratorHelper.RandomUpperChars(3) + GeneratorHelper.RandomNumericalChars(3));
         }
-        _freeDoctors.Add(hospitalName, doctorsList);
-        _busyDoctors.Add(hospitalName, new List<string>());
+        _freeDoctors.Add(hospital.Key, doctorsList);
+        _busyDoctors.Add(hospital.Key, new List<string>());
       }
     }
 
@@ -85,9 +98,9 @@ namespace PatientGenerator
       }
 
       var patientArrival = new PatientArrival(GeneratorHelper.RandomUpperChars(4) + GeneratorHelper.RandomNumericalChars(8),
-                                              _hospitals[GeneratorHelper.RandomNumericalValue(_hospitals.Count)],
-                                              DateTime.Now,
-                                              (DiseaseType)GeneratorHelper.RandomNumericalValue((int)DiseaseType.Max));
+                                              _hospitals.Keys.ToList()[GeneratorHelper.RandomNumericalValue(_hospitals.Count)],
+                                              _diseases[GeneratorHelper.RandomNumericalValue(_diseases.Count)],
+                                              DateTime.Now);
 
       // Keep the new generated patient in the arrival list
       _patientsArrival.Add(patientId, patientArrival);
@@ -194,6 +207,8 @@ namespace PatientGenerator
         var documentTagFound = false;
         var hospitalsTagFound = false;
         var hospitalTagFound = false;
+        var diseasesTagFound = false;
+        var diseaseTagFound = false;
         var docTitle = string.Empty;
         var docVersion = string.Empty;
 
@@ -213,9 +228,16 @@ namespace PatientGenerator
               case HospitalsTag:
                 hospitalsTagFound = true;
                 break;
+              case DiseasesTag:
+                diseasesTagFound = true;
+                break;
               case HospitalTag:
                 hospitalTagFound = true;
-                _hospitals.Add(ReadHospitalId(xmlReader));
+                ReadHospitalId(xmlReader);
+                break;
+              case DiseaseTag:
+                diseaseTagFound = true;
+                ReadDiseaseId(xmlReader);
                 break;
             }
           }
@@ -237,29 +259,19 @@ namespace PatientGenerator
           throw new ApplicationException("Unrecognized XML file format provided: Document Tag missing Version attribute!");
         }
 
-        if (!docTitle.Equals(DocumentTitleValue))
+        if (!hospitalsTagFound && !diseasesTagFound)
         {
-          throw new ApplicationException("Unrecognized XML file format provided: Invalid Document Title!");
+          throw new ApplicationException("Unrecognized XML file format provided: Hospitals/Diseases Tag Not Found!");
         }
 
-        if (!docVersion.Equals(DocumentVersionValue))
+        if (!hospitalTagFound && !diseaseTagFound)
         {
-          throw new ApplicationException("Unrecognized XML file format provided: Invalid Document Version!");
-        }
-
-        if (!hospitalsTagFound)
-        {
-          throw new ApplicationException("Unrecognized XML file format provided: Hospitals Tag Not Found!");
-        }
-
-        if (!hospitalTagFound)
-        {
-          throw new ApplicationException("Unrecognized XML file format provided: Hospital Tag Not Found!");
+          throw new ApplicationException("Unrecognized XML file format provided: Hospital/Disease Tag Not Found!");
         }
       }
     }
 
-    private string ReadHospitalId(XmlReader xmlReader)
+    private void ReadHospitalId(XmlReader xmlReader)
     {
       // Read Name attribute
       var name = xmlReader[NameTag];
@@ -268,7 +280,55 @@ namespace PatientGenerator
         throw new ApplicationException("Unrecognized XML file format provided: Name Tag Not Found!!");
       }
 
-      return name;
+      // Read Doctors attribute
+      var nbOfDoctorsStr = xmlReader[DoctorsTag];
+      if (nbOfDoctorsStr == null)
+      {
+        throw new ApplicationException("Unrecognized XML file format provided: Doctors Tag Not Found!!");
+      }
+
+      _hospitals.Add(name, int.Parse(nbOfDoctorsStr));
+    }
+
+    private void ReadDiseaseId(XmlReader xmlReader)
+    {
+      // Read Type attribute
+      var type = xmlReader[TypeTag];
+      if (type == null)
+      {
+        throw new ApplicationException("Unrecognized XML file format provided: Type Tag Not Found!!");
+      }
+
+      // Read Priority attribute
+      var priorityStr = xmlReader[PriorityTag];
+      if (priorityStr == null)
+      {
+        throw new ApplicationException("Unrecognized XML file format provided: Priority Tag Not Found!!");
+      }
+
+      // Read RequiredTimeValue attribute
+      var requiredTimeValueStr = xmlReader[RequiredTimeValueTag];
+      if (requiredTimeValueStr == null)
+      {
+        throw new ApplicationException("Unrecognized XML file format provided: RequiredTimeValue Tag Not Found!!");
+      }
+
+      // Read RequiredTimeUnit attribute
+      var requiredTimeUnitStr = xmlReader[RequiredTimeUnitTag];
+      if (requiredTimeUnitStr == null)
+      {
+        throw new ApplicationException("Unrecognized XML file format provided: RequiredTimeUnit Tag Not Found!!");
+      }
+
+      _diseases.Add(new Disease(ParseEnum<DiseaseType>(type),
+                                ParseEnum<DiseasePriority>(priorityStr),
+                                uint.Parse(requiredTimeValueStr),
+                                ParseEnum<RequiredTimeUnit>(requiredTimeUnitStr)));
+    }
+
+    private static T ParseEnum<T>(string value)
+    {
+      return (T)Enum.Parse(typeof(T), value, true);
     }
 
     #endregion
