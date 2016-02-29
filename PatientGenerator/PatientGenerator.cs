@@ -38,7 +38,7 @@ namespace PatientGenerator
     private readonly IDictionary<string, IList<string>> _freeDoctors;
     private readonly IDictionary<string, IList<string>> _busyDoctors;
     private readonly IDictionary<int, IPatientArrival> _patientsArrival;
-    private readonly IDictionary<int, IPatientCare> _patientsCare;
+    private readonly IDictionary<int, IPatientTakenInChargeByDoctor> _patientsTakenInChargeByDoctor;
     private readonly IDictionary<int, IPatientLeaving> _patientsLeaving;
     private readonly IList<IDisease> _diseases;
 
@@ -52,7 +52,7 @@ namespace PatientGenerator
       _freeDoctors = new Dictionary<string, IList<string>>();
       _busyDoctors = new Dictionary<string, IList<string>>();
       _patientsArrival = new Dictionary<int, IPatientArrival>();
-      _patientsCare = new Dictionary<int, IPatientCare>();
+      _patientsTakenInChargeByDoctor = new Dictionary<int, IPatientTakenInChargeByDoctor>();
       _patientsLeaving = new Dictionary<int, IPatientLeaving>();
       _diseases = new List<IDisease>();
 
@@ -108,7 +108,7 @@ namespace PatientGenerator
       return patientArrival;
     }
 
-    public IPatientCare GeneratePatientCare()
+    public IPatientTakenInChargeByDoctor GeneratePatientTakenInChargeByDoctor()
     {
       var atLeastOneFreeDoctor = false;
       if (_patientsArrival.Count == 0)
@@ -128,7 +128,7 @@ namespace PatientGenerator
         throw new ApplicationException("No doctor available");
       }
 
-      IPatientCare patientCare = null;
+      IPatientTakenInChargeByDoctor patientTakenInChargeByDoctor = null;
       var freeDoctor = false;
 
       while (!freeDoctor)
@@ -150,8 +150,8 @@ namespace PatientGenerator
           _freeDoctors[patientArrival.HospitalId].Remove(doctorId);
 
           // Keep the new generated patient in the care list
-          patientCare = new PatientCare(patientArrival.PatientId, patientArrival.HospitalId, DateTime.Now, doctorId);
-          _patientsCare.Add(patientId, patientCare);
+          patientTakenInChargeByDoctor = new PatientTakenInChargeByDoctor(patientArrival.PatientId, patientArrival.HospitalId, DateTime.Now, doctorId);
+          _patientsTakenInChargeByDoctor.Add(patientId, patientTakenInChargeByDoctor);
 
           // Remove this patient from the arrival list
           _patientsArrival.Remove(patientId);
@@ -160,32 +160,32 @@ namespace PatientGenerator
         }
       }
 
-      return patientCare;
+      return patientTakenInChargeByDoctor;
     }
 
     public IPatientLeaving GeneratePatientLeaving()
     {
-      if (_patientsCare.Count == 0)
+      if (_patientsTakenInChargeByDoctor.Count == 0)
       {
         throw new ApplicationException("No patient in the care list");
       }
 
       // Take a patient from the care list
-      var patientId = _patientsCare.Keys.ToList()[GeneratorHelper.RandomNumericalValue(_patientsCare.Count)];
-      var patientCare = _patientsCare[patientId];
+      var patientId = _patientsTakenInChargeByDoctor.Keys.ToList()[GeneratorHelper.RandomNumericalValue(_patientsTakenInChargeByDoctor.Count)];
+      var patientTakenInChargeByDoctor = _patientsTakenInChargeByDoctor[patientId];
 
       // Remove this doctor from the busy list
-      _freeDoctors[patientCare.HospitalId].Remove(patientCare.DoctorId);
+      _freeDoctors[patientTakenInChargeByDoctor.HospitalId].Remove(patientTakenInChargeByDoctor.DoctorId);
 
       // Add this doctor to the free list
-      _freeDoctors[patientCare.HospitalId].Add(patientCare.DoctorId);
+      _freeDoctors[patientTakenInChargeByDoctor.HospitalId].Add(patientTakenInChargeByDoctor.DoctorId);
 
       // Keep the new generated patient in the leaving list
-      var patientLeaving = new PatientLeaving(patientCare.PatientId, patientCare.HospitalId, DateTime.Now);
+      var patientLeaving = new PatientLeaving(patientTakenInChargeByDoctor.PatientId, patientTakenInChargeByDoctor.HospitalId, DateTime.Now);
       _patientsLeaving.Add(patientId, patientLeaving);
 
-      // Remove this patient from the care list
-      _patientsCare.Remove(patientId);
+     // Remove this patient from the care list
+     _patientsTakenInChargeByDoctor.Remove(patientId);
 
       return patientLeaving;
     }
