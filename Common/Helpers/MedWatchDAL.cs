@@ -45,7 +45,7 @@ namespace Common.Helpers
 
                         param = new SqlParameter();
                         param.ParameterName = "@EventTimestamp";
-                        param.Value = e.PatiendId;
+                        param.Value = e.EventTime;
                         param.SqlDbType = System.Data.SqlDbType.DateTime2;
                         cmd.Parameters.Add( param );
 
