@@ -66,6 +66,8 @@ namespace Common.Helpers
                             param.Value = DBNull.Value;
                         param.SqlDbType = System.Data.SqlDbType.Int;
                         cmd.Parameters.Add( param );
+
+                        cmd.ExecuteNonQuery();
                     }
                 }
             }
