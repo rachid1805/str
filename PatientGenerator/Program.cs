@@ -41,7 +41,7 @@ namespace PatientGenerator
         var patient = generator.GeneratePatientArrival();
         sw.Stop();
         long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.Disease.Type + " " + patient.ArrivalTime + " : " + iteration + " en " + microseconds + " us");
+        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.Disease.Id + " " + patient.ArrivalTime + " : " + iteration + " en " + microseconds + " us");
       }
 
       Thread.Sleep(2000);
@@ -75,6 +75,32 @@ namespace PatientGenerator
         long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
         Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.LeavingTime + " : " + iteration + " en " + microseconds + " us");
       }
+
+      iteration = 0;
+      Console.WriteLine();
+      while (++iteration < 100)
+      {
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+        var hospitals = Common.Helpers.MedWatchDAL.FindHospitals();
+        sw.Stop();
+        long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
+        Console.WriteLine("DB Access Nb hopitals " + hospitals.ToList().Count + " en " + microseconds + " us");
+      }
+
+      iteration = 0;
+      Console.WriteLine();
+      while (++iteration < 100)
+      {
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+        var diseases = Common.Helpers.MedWatchDAL.FindDiseses();
+        sw.Stop();
+        long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
+        Console.WriteLine("DB Access Nb diseases " + diseases.ToList().Count + " en " + microseconds + " us");
+      }
+
+      Console.ReadKey();
     }
   }
 }

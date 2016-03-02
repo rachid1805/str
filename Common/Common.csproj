@@ -38,6 +38,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entities\Disease.cs" />
     <Compile Include="Entities\Hospital.cs" />
     <Compile Include="Entities\HospitalEvent.cs" />
     <Compile Include="Helpers\MedWatchDAL.cs" />

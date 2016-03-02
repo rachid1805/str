@@ -6,38 +6,6 @@ using System.Threading.Tasks;
 
 namespace Common.Entities
 {
-    public enum DiseaseType
-    {
-        Cardiac = 0,
-        RespiratoryFailure = 1,
-        Pneumonia = 2,
-        Bronchitis = 3,
-        Fracture = 4,
-        Gastro = 5,
-        Influenza = 6,
-        Cold = 7,
-        Max = 8
-    }
-
-    public enum DiseasePriority
-    {
-        VeryHigh = 0,
-        High = 1,
-        Medium = 2,
-        Low = 3,
-        VeryLow = 4,
-        Max = 5
-    }
-
-    public enum RequiredTimeUnit
-    {
-        Hr = 0,
-        Min = 1,
-        Sec = 2,
-        MilliSec = 3,
-        Max = 4
-    }
-
     public interface IHospitalEvent
     {
         int EventId { get; }
@@ -56,20 +24,12 @@ namespace Common.Entities
         PatientLeaving
     }
 
-    public interface IDisease
-    {
-        DiseaseType Type { get; }
-        DiseasePriority Priority { get; }
-        uint RequiredTimeValue { get; }
-        RequiredTimeUnit RequiredTimeUnit { get; }
-    }
-
     public interface IPatientArrival
     {
         int PatientId { get; }
         int HospitalId { get; }
         DateTime ArrivalTime { get; }
-        IDisease Disease { get; }
+        Disease Disease { get; }
     }
 
     public interface IPatientTakenInChargeByDoctor
@@ -98,35 +58,11 @@ namespace Common.Entities
         public int? DoctorId { get; set; }
     }
 
-    public class Disease : IDisease
-    {
-        #region Constructor
-
-        public Disease(DiseaseType type, DiseasePriority priority, uint requiredTimeValue, RequiredTimeUnit requiredTimeUnit)
-        {
-            Type = type;
-            Priority = priority;
-            RequiredTimeValue = requiredTimeValue;
-            RequiredTimeUnit = requiredTimeUnit;
-        }
-
-        #endregion
-
-        #region IDisease implementation
-
-        public DiseaseType Type { get; private set; }
-        public DiseasePriority Priority { get; private set; }
-        public uint RequiredTimeValue { get; private set; }
-        public RequiredTimeUnit RequiredTimeUnit { get; private set; }
-
-        #endregion
-    }
-
     public class PatientArrival : IPatientArrival //TODO IHospitalEvent
     {
         #region Constructor
 
-        public PatientArrival(int patientId, int hospitalId, IDisease disease, DateTime arrivalTime)
+        public PatientArrival(int patientId, int hospitalId, Disease disease, DateTime arrivalTime)
         {
             PatientId = patientId;
             HospitalId = hospitalId;
@@ -141,7 +77,7 @@ namespace Common.Entities
         public int PatientId { get; private set; }
         public int HospitalId { get; private set; }
         public DateTime ArrivalTime { get; private set; }
-        public IDisease Disease { get; private set; }
+        public Disease Disease { get; private set; }
 
         #endregion
     }

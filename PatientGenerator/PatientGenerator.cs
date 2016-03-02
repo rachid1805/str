@@ -41,7 +41,7 @@ namespace PatientGenerator
     private readonly IList<IPatientArrival> _patientsArrival;
     private readonly IList<IPatientTakenInChargeByDoctor> _patientsTakenInChargeByDoctor;
     private readonly IList<IPatientLeaving> _patientsLeaving;
-    private readonly IList<IDisease> _diseases;
+    private readonly IList<Disease> _diseases;
 
     #endregion
 
@@ -55,7 +55,7 @@ namespace PatientGenerator
       _patientsArrival = new List<IPatientArrival>();
       _patientsTakenInChargeByDoctor = new List<IPatientTakenInChargeByDoctor>();
       _patientsLeaving = new List<IPatientLeaving>();
-      _diseases = new List<IDisease>();
+      _diseases = new List<Disease>();
 
       var xmlFileDir = Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath);
       if (xmlFileDir == null)
@@ -326,10 +326,13 @@ namespace PatientGenerator
         throw new ApplicationException("Unrecognized XML file format provided: RequiredTimeUnit Tag Not Found!!");
       }
 
-      _diseases.Add(new Disease(ParseEnum<DiseaseType>(type),
-                                ParseEnum<DiseasePriority>(priorityStr),
-                                uint.Parse(requiredTimeValueStr),
-                                ParseEnum<RequiredTimeUnit>(requiredTimeUnitStr)));
+      _diseases.Add(new Disease
+      {
+        Id = ParseEnum<DiseaseType>(type),
+        Priority = ParseEnum<DiseasePriority>(priorityStr),
+        RequiredTime = int.Parse(requiredTimeValueStr),
+        TimeUnit = ParseEnum<RequiredTimeUnit>(requiredTimeUnitStr)
+      });
     }
 
     private static T ParseEnum<T>(string value)

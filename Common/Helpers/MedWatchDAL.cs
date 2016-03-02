@@ -60,7 +60,7 @@ namespace Common.Helpers
 
                         param = new SqlParameter();
                         param.ParameterName = "@DoctorId";
-                        if ( e.DiseaseType.HasValue )
+                        if ( e.DoctorId.HasValue )
                             param.Value = e.DoctorId.Value;
                         else
                             param.Value = DBNull.Value;
@@ -143,7 +143,7 @@ namespace Common.Helpers
         {
             var hospitals = new List<Hospital>();
 
-            string sql = "SELECT Id, Name FROM Hospital ORDER BY Name";
+            string sql = "SELECT Id, Name, AssignedDoctors FROM Hospital ORDER BY Name";
 
             SqlConnection conn = null;
 
@@ -164,6 +164,7 @@ namespace Common.Helpers
                         {
                             Id = dr.GetInt32( 0 ),
                             Name = dr.GetString( 1 ),
+                            AssignedDoctors = dr.GetInt32(2)
                         };
 
                         hospitals.Add( h );
@@ -180,6 +181,52 @@ namespace Common.Helpers
             }
 
             return hospitals;
+        }
+
+        public static IEnumerable<Disease> FindDiseses()
+        {
+            var diseases = new List<Disease>();
+
+            string sql = "SELECT Id, Name, Priority, RequiredTime, TimeUnit FROM Disease";
+
+            SqlConnection conn = null;
+
+            try
+            {
+                conn = new SqlConnection(ConnectionString);
+                conn.Open();
+
+                using (var cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.CommandType = System.Data.CommandType.Text;
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    while (dr.Read())
+                    {
+                        var h = new Disease
+                        {
+                            Id = (DiseaseType)dr.GetInt16(0),
+                            Name = dr.GetString(1),
+                            Priority = (DiseasePriority)dr.GetInt16(2),
+                            RequiredTime = dr.GetInt32(3),
+                            TimeUnit = (RequiredTimeUnit)dr.GetInt16(4)
+                        };
+
+                        diseases.Add(h);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // TODO log error
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            return diseases;
         }
     }
 }
