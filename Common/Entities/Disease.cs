@@ -15,8 +15,7 @@ namespace Common.Entities
         Fracture = 4,
         Gastro = 5,
         Influenza = 6,
-        Cold = 7,
-        Max = 8
+        Cold = 7
     }
 
     public enum DiseasePriority
@@ -25,17 +24,14 @@ namespace Common.Entities
         High = 1,
         Medium = 2,
         Low = 3,
-        VeryLow = 4,
-        Max = 5
+        VeryLow = 4
     }
 
     public enum RequiredTimeUnit
     {
-        Hr = 0,
-        Min = 1,
-        Sec = 2,
-        MilliSec = 3,
-        Max = 4
+        Min = 0,
+        Sec = 1,
+        MilliSec = 2
     }
 
     public class Disease

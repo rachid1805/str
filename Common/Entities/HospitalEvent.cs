@@ -38,7 +38,8 @@ namespace Common.Entities
         int HospitalId { get; }
         DateTime TakenInChargeByDoctorTime { get; }
         int DoctorId { get; }
-    }
+        Disease Disease { get; }
+  }
 
     public interface IPatientLeaving
     {
@@ -86,12 +87,13 @@ namespace Common.Entities
     {
         #region Constructor
 
-        public PatientTakenInChargeByDoctor( int patientId, int hospitalId, DateTime takenInChargeByDoctorTime, int doctorId )
+        public PatientTakenInChargeByDoctor( int patientId, int hospitalId, DateTime takenInChargeByDoctorTime, int doctorId, Disease disease )
         {
             PatientId = patientId;
             HospitalId = hospitalId;
             TakenInChargeByDoctorTime = takenInChargeByDoctorTime;
             DoctorId = doctorId;
+            Disease = disease;
         }
 
         #endregion
@@ -102,6 +104,7 @@ namespace Common.Entities
         public int HospitalId { get; private set; }
         public DateTime TakenInChargeByDoctorTime { get; private set; }
         public int DoctorId { get; private set; }
+        public Disease Disease { get; private set; }
 
         #endregion
     }

@@ -110,7 +110,7 @@ namespace PatientGenerator
           freeDoctorsForThisHospital.Remove(doctorId);
 
           // Keep the new generated patient in the care list
-          patientTakenInChargeByDoctor = new PatientTakenInChargeByDoctor(patientArrival.PatientId, patientArrival.HospitalId, DateTime.Now, doctorId);
+          patientTakenInChargeByDoctor = new PatientTakenInChargeByDoctor(patientArrival.PatientId, patientArrival.HospitalId, DateTime.Now, doctorId, patientArrival.Disease);
           _patientsTakenInChargeByDoctor.Add(patientTakenInChargeByDoctor);
 
           // Remove this patient from the arrival list
@@ -130,27 +130,65 @@ namespace PatientGenerator
         throw new ApplicationException("No patient in the care list");
       }
 
-      // Take a patient from the care list
-      var patientTakenInChargeByDoctor = _patientsTakenInChargeByDoctor[GeneratorHelper.RandomNumericalValue(_patientsTakenInChargeByDoctor.Count)];
+      IPatientLeaving patientToLeave = null;
+      var patientLeaving = false;
 
-      // Remove this doctor from the busy list
-      IList<int> busyDoctorsForThisHospital;
-      _busyDoctors.TryGetValue(patientTakenInChargeByDoctor.HospitalId, out busyDoctorsForThisHospital);
-      busyDoctorsForThisHospital.Remove(patientTakenInChargeByDoctor.DoctorId);
+      while (!patientLeaving)
+      {
+        // Take a patient from the care list
+        var patientTakenInCharge = _patientsTakenInChargeByDoctor[GeneratorHelper.RandomNumericalValue(_patientsTakenInChargeByDoctor.Count)];
+        var elapsedTime = (DateTime.Now - patientTakenInCharge.TakenInChargeByDoctorTime).Milliseconds;
 
-      // Add this doctor to the free list
-      IList<int> freeDoctorsForThisHospital;
-      _freeDoctors.TryGetValue(patientTakenInChargeByDoctor.HospitalId, out freeDoctorsForThisHospital);
-      freeDoctorsForThisHospital.Add(patientTakenInChargeByDoctor.DoctorId);
+        if (ConvertElapsedTimeFromMsTo(elapsedTime, patientTakenInCharge.Disease.TimeUnit) >= patientTakenInCharge.Disease.RequiredTime)
+        {
+          // Remove this doctor from the busy list
+          IList<int> busyDoctorsForThisHospital;
+          _busyDoctors.TryGetValue(patientTakenInCharge.HospitalId, out busyDoctorsForThisHospital);
+          busyDoctorsForThisHospital.Remove(patientTakenInCharge.DoctorId);
 
-      // Keep the new generated patient in the leaving list
-      var patientLeaving = new PatientLeaving(patientTakenInChargeByDoctor.PatientId, patientTakenInChargeByDoctor.HospitalId, DateTime.Now);
-      _patientsLeaving.Add(patientLeaving);
+          // Add this doctor to the free list
+          IList<int> freeDoctorsForThisHospital;
+          _freeDoctors.TryGetValue(patientTakenInCharge.HospitalId, out freeDoctorsForThisHospital);
+          freeDoctorsForThisHospital.Add(patientTakenInCharge.DoctorId);
 
-     // Remove this patient from the care list
-     _patientsTakenInChargeByDoctor.Remove(patientTakenInChargeByDoctor);
+          // Keep the new generated patient in the leaving list
+          patientToLeave = new PatientLeaving(patientTakenInCharge.PatientId, patientTakenInCharge.HospitalId, DateTime.Now);
+          _patientsLeaving.Add(patientToLeave);
 
-      return patientLeaving;
+          // Remove this patient from the care list
+          _patientsTakenInChargeByDoctor.Remove(patientTakenInCharge);
+
+          patientLeaving = true;
+        }
+      }    
+
+      return patientToLeave;
+    }
+
+    #endregion
+
+    #region Private
+
+    private int ConvertElapsedTimeFromMsTo(int timeMilliSec, RequiredTimeUnit timeUnit)
+    {
+      var convertedTime = 0;
+
+      switch (timeUnit)
+      {
+        case RequiredTimeUnit.Min:
+          convertedTime = timeMilliSec / (1000 * 60);
+          break;
+        case RequiredTimeUnit.Sec:
+          convertedTime = timeMilliSec / 1000;
+          break;
+        case RequiredTimeUnit.MilliSec:
+          convertedTime = timeMilliSec;
+          break;
+        default:
+          throw new ApplicationException("Unsupported unit");
+      }
+
+      return convertedTime;
     }
 
     #endregion
