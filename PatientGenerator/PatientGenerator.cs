@@ -16,7 +16,7 @@ namespace PatientGenerator
     private readonly IList<Hospital> _hospitals;
     private readonly IDictionary<int, IList<int>> _freeDoctors;
     private readonly IDictionary<int, IList<int>> _busyDoctors;
-    private readonly IList<IPatientArrival> _patientsArrival;
+    private readonly List<IPatientArrival> _patientsArrival;
     private readonly IList<IPatientTakenInChargeByDoctor> _patientsTakenInChargeByDoctor;
     private readonly IList<IPatientLeaving> _patientsLeaving;
     private readonly IList<Disease> _diseases;
@@ -62,6 +62,7 @@ namespace PatientGenerator
 
       // Keep the new generated patient in the arrival list
       _patientsArrival.Add(patientArrival);
+      _patientsArrival.Sort(new ArrivalComparer());
 
       return patientArrival;
     }
@@ -88,11 +89,13 @@ namespace PatientGenerator
 
       IPatientTakenInChargeByDoctor patientTakenInChargeByDoctor = null;
       var freeDoctor = false;
+      var patientIndex = 0;
 
       while (!freeDoctor)
       {
-        // Take a patient from the waiting list
-        var patientArrival = _patientsArrival[GeneratorHelper.RandomNumericalValue(_patientsArrival.Count)];
+        // Take a patient from the waiting list : FIFO
+        //var patientArrival = _patientsArrival[GeneratorHelper.RandomNumericalValue(_patientsArrival.Count)];
+        var patientArrival = _patientsArrival[patientIndex];
         IList<int> freeDoctorsForThisHospital;
         _freeDoctors.TryGetValue(patientArrival.HospitalId, out freeDoctorsForThisHospital);
 
@@ -117,6 +120,11 @@ namespace PatientGenerator
           _patientsArrival.Remove(patientArrival);
 
           freeDoctor = true;
+        }
+        else
+        {
+          // No available doctor for this patient
+          patientIndex = (patientIndex < (_patientsArrival.Count - 1)) ? ++patientIndex : 0;
         }
       }
 
@@ -189,6 +197,43 @@ namespace PatientGenerator
       }
 
       return convertedTime;
+    }
+
+    private class ArrivalComparer : IComparer<IPatientArrival>
+    {
+      int IComparer<IPatientArrival>.Compare(IPatientArrival x, IPatientArrival y)
+      {
+        var result = 0;
+
+        if ((x == null) || (y == null))
+        {
+          throw new NotSupportedException("Cannot compare null pointer");
+        }
+
+        // Disease priority comparison
+        if (x.Disease.Priority < y.Disease.Priority)
+        {
+          result = -1;
+        }
+        else if (y.Disease.Priority < x.Disease.Priority)
+        {
+          result = 1;
+        }
+        else
+        {
+          // The same disease priority, arrival time comparison
+          if (x.ArrivalTime <= y.ArrivalTime)
+          {
+            result = -1;
+          }
+          else
+          {
+            result = 1;
+          }
+        }
+
+        return result;
+      }
     }
 
     #endregion

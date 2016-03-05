@@ -26,9 +26,6 @@ namespace PatientGenerator
       int numberOfPatientsToGenerate = int.Parse(args[1]);
       int periodOfTimeMs = int.Parse(args[2]);
 
-      // Creates or overwrites the specified file
-      //var fileStream = File.Create(pathFile);
-
       // Generation test
       var generator = new PatientGenerator();
       var iteration = 0;
@@ -41,10 +38,8 @@ namespace PatientGenerator
         var patient = generator.GeneratePatientArrival();
         sw.Stop();
         long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.Disease.Id + " " + patient.ArrivalTime + " : " + iteration + " en " + microseconds + " us");
+        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.Disease.Priority + " " + patient.ArrivalTime + " : " + iteration + " en " + microseconds + " us");
       }
-
-      Thread.Sleep(2000);
 
       iteration = 0;
       Console.WriteLine("");
@@ -60,8 +55,6 @@ namespace PatientGenerator
         Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.DoctorId + " " + patient.TakenInChargeByDoctorTime + " : " + iteration + " en " + microseconds + " us");
       }
 
-      Thread.Sleep(2000);
-
       iteration = 0;
       Console.WriteLine("");
       Console.WriteLine("Patient Leaving");
@@ -74,30 +67,6 @@ namespace PatientGenerator
         sw.Stop();
         long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
         Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.LeavingTime + " : " + iteration + " en " + microseconds + " us");
-      }
-
-      iteration = 0;
-      Console.WriteLine();
-      while (++iteration < 100)
-      {
-        Stopwatch sw = new Stopwatch();
-        sw.Start();
-        var hospitals = Common.Helpers.MedWatchDAL.FindHospitals();
-        sw.Stop();
-        long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        Console.WriteLine("DB Access Nb hopitals " + hospitals.ToList().Count + " en " + microseconds + " us");
-      }
-
-      iteration = 0;
-      Console.WriteLine();
-      while (++iteration < 100)
-      {
-        Stopwatch sw = new Stopwatch();
-        sw.Start();
-        var diseases = Common.Helpers.MedWatchDAL.FindDiseses();
-        sw.Stop();
-        long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        Console.WriteLine("DB Access Nb diseases " + diseases.ToList().Count + " en " + microseconds + " us");
       }
 
       Console.ReadKey();
