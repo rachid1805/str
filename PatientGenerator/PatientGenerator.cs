@@ -5,37 +5,15 @@ using System.IO;
 using System.Reflection;
 using System.Xml;
 using Common.Entities;
+using Common.Helpers;
 
 namespace PatientGenerator
 {
   public class PatientGenerator : IPatientGenerator
   {
-    #region Constants
-
-    private const string DocumentTag = "Document";
-    private const string DocumentTitleAttribName = "Title";
-    private const string DocumentVersionAttribName = "Version";
-
-    private const string HospitalsTag = "Hospitals";
-    private const string HospitalTag = "Hospital";
-    private const string IdTag = "Id";
-    private const string NameTag = "Name";
-    private const string DoctorsTag = "Doctors";
-    private const string HostpitalIdsFile = "HospitalIds.xml";
-
-    private const string DiseasesTag = "Diseases";
-    private const string DiseaseTag = "Disease";
-    private const string TypeTag = "Type";
-    private const string PriorityTag = "Priority";
-    private const string RequiredTimeValueTag = "RequiredTimeValue";
-    private const string RequiredTimeUnitTag = "RequiredTimeUnit";
-    private const string DiseaseIdsFile = "DiseaseIds.xml";
-
-    #endregion
-
     #region Attributes
 
-    private readonly IDictionary<Hospital, int> _hospitals;
+    private readonly IList<Hospital> _hospitals;
     private readonly IDictionary<int, IList<int>> _freeDoctors;
     private readonly IDictionary<int, IList<int>> _busyDoctors;
     private readonly IList<IPatientArrival> _patientsArrival;
@@ -49,39 +27,25 @@ namespace PatientGenerator
 
     public PatientGenerator()
     {
-      _hospitals = new Dictionary<Hospital, int>();
+      _hospitals = MedWatchDAL.FindHospitals().ToList();
+      _diseases = MedWatchDAL.FindDiseses().ToList();
       _freeDoctors = new Dictionary<int, IList<int>>();
       _busyDoctors = new Dictionary<int, IList<int>>();
       _patientsArrival = new List<IPatientArrival>();
       _patientsTakenInChargeByDoctor = new List<IPatientTakenInChargeByDoctor>();
       _patientsLeaving = new List<IPatientLeaving>();
-      _diseases = new List<Disease>();
-
-      var xmlFileDir = Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath);
-      if (xmlFileDir == null)
-      {
-        throw new DirectoryNotFoundException("Could not find the specified directory");
-      }
-
-      // Populates Hostpitals from the xml file
-      var xmlFilepath = Path.Combine(xmlFileDir, HostpitalIdsFile);
-      ReadXmlFile(xmlFilepath);
-
-      // Populates Diseases from the xml file
-      xmlFilepath = Path.Combine(xmlFileDir, DiseaseIdsFile);
-      ReadXmlFile(xmlFilepath);
 
       // Assign doctors to each hospital
       foreach (var hospital in _hospitals)
       {
-        var numberOfDoctors = hospital.Value;
+        var numberOfDoctors = hospital.AssignedDoctors;
         var doctorsList = new List<int>(numberOfDoctors);
         for (var i = 0; i < numberOfDoctors; ++i)
         {
           doctorsList.Add(GeneratorHelper.RandomNumericalValue(int.MaxValue));
         }
-        _freeDoctors.Add(hospital.Key.Id, doctorsList);
-        _busyDoctors.Add(hospital.Key.Id, new List<int>());
+        _freeDoctors.Add(hospital.Id, doctorsList);
+        _busyDoctors.Add(hospital.Id, new List<int>());
       }
     }
 
@@ -187,157 +151,6 @@ namespace PatientGenerator
      _patientsTakenInChargeByDoctor.Remove(patientTakenInChargeByDoctor);
 
       return patientLeaving;
-    }
-
-    #endregion
-
-    #region Private Functions
-
-    private void ReadXmlFile(string xmlFilepath)
-    {
-      if (!File.Exists(xmlFilepath))
-      {
-        throw new FileNotFoundException(string.Format("Could not find file: {0}", xmlFilepath));
-      }
-
-      // First, try to create an XmlReader for the specified file path.
-      using (var xmlReader = XmlReader.Create(xmlFilepath))
-      {
-        var documentTagFound = false;
-        var hospitalsTagFound = false;
-        var hospitalTagFound = false;
-        var diseasesTagFound = false;
-        var diseaseTagFound = false;
-        var docTitle = string.Empty;
-        var docVersion = string.Empty;
-
-        // Parse the file and collect required attributes and values. 
-        while (xmlReader.Read())
-        {
-          if (xmlReader.IsStartElement())
-          {
-            switch (xmlReader.Name)
-            {
-              case DocumentTag:
-                documentTagFound = true;
-                // if an attribute is not found, the value will be Null
-                docTitle = xmlReader[DocumentTitleAttribName];
-                docVersion = xmlReader[DocumentVersionAttribName];
-                break;
-              case HospitalsTag:
-                hospitalsTagFound = true;
-                break;
-              case DiseasesTag:
-                diseasesTagFound = true;
-                break;
-              case HospitalTag:
-                hospitalTagFound = true;
-                ReadHospitalId(xmlReader);
-                break;
-              case DiseaseTag:
-                diseaseTagFound = true;
-                ReadDiseaseId(xmlReader);
-                break;
-            }
-          }
-        }
-
-        // Validate the information retrieved and throw if missing or invalid.
-        if (!documentTagFound)
-        {
-          throw new ApplicationException("Unrecognized XML file format provided: No Document Tag Found!");
-        }
-
-        if (string.IsNullOrEmpty(docTitle))
-        {
-          throw new ApplicationException("Unrecognized XML file format provided: Document Tag missing Title attribute!");
-        }
-
-        if (string.IsNullOrEmpty(docVersion))
-        {
-          throw new ApplicationException("Unrecognized XML file format provided: Document Tag missing Version attribute!");
-        }
-
-        if (!hospitalsTagFound && !diseasesTagFound)
-        {
-          throw new ApplicationException("Unrecognized XML file format provided: Hospitals/Diseases Tag Not Found!");
-        }
-
-        if (!hospitalTagFound && !diseaseTagFound)
-        {
-          throw new ApplicationException("Unrecognized XML file format provided: Hospital/Disease Tag Not Found!");
-        }
-      }
-    }
-
-    private void ReadHospitalId(XmlReader xmlReader)
-    {
-      // Read Id attribute
-      var id = xmlReader[IdTag];
-      if (id == null)
-      {
-        throw new ApplicationException("Unrecognized XML file format provided: Id Tag Not Found!!");
-      }
-
-      // Read Name attribute
-      var name = xmlReader[NameTag];
-      if (name == null)
-      {
-        throw new ApplicationException("Unrecognized XML file format provided: Name Tag Not Found!!");
-      }
-
-      // Read Doctors attribute
-      var nbOfDoctorsStr = xmlReader[DoctorsTag];
-      if (nbOfDoctorsStr == null)
-      {
-        throw new ApplicationException("Unrecognized XML file format provided: Doctors Tag Not Found!!");
-      }
-
-      _hospitals.Add(new Hospital { Id = int.Parse(id), Name = name }, int.Parse(nbOfDoctorsStr));
-    }
-
-    private void ReadDiseaseId(XmlReader xmlReader)
-    {
-      // Read Type attribute
-      var type = xmlReader[TypeTag];
-      if (type == null)
-      {
-        throw new ApplicationException("Unrecognized XML file format provided: Type Tag Not Found!!");
-      }
-
-      // Read Priority attribute
-      var priorityStr = xmlReader[PriorityTag];
-      if (priorityStr == null)
-      {
-        throw new ApplicationException("Unrecognized XML file format provided: Priority Tag Not Found!!");
-      }
-
-      // Read RequiredTimeValue attribute
-      var requiredTimeValueStr = xmlReader[RequiredTimeValueTag];
-      if (requiredTimeValueStr == null)
-      {
-        throw new ApplicationException("Unrecognized XML file format provided: RequiredTimeValue Tag Not Found!!");
-      }
-
-      // Read RequiredTimeUnit attribute
-      var requiredTimeUnitStr = xmlReader[RequiredTimeUnitTag];
-      if (requiredTimeUnitStr == null)
-      {
-        throw new ApplicationException("Unrecognized XML file format provided: RequiredTimeUnit Tag Not Found!!");
-      }
-
-      _diseases.Add(new Disease
-      {
-        Id = ParseEnum<DiseaseType>(type),
-        Priority = ParseEnum<DiseasePriority>(priorityStr),
-        RequiredTime = int.Parse(requiredTimeValueStr),
-        TimeUnit = ParseEnum<RequiredTimeUnit>(requiredTimeUnitStr)
-      });
-    }
-
-    private static T ParseEnum<T>(string value)
-    {
-      return (T)Enum.Parse(typeof(T), value, true);
     }
 
     #endregion
