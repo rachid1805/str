@@ -19,6 +19,8 @@ namespace PatientGenerator
         return;
       }
 
+      int _eventId = 0;
+
       try
       {
         int numberOfPatientsToGenerate = int.Parse(args[0]);
@@ -39,6 +41,7 @@ namespace PatientGenerator
             var patient = generator.GeneratePatientArrival();
             hospitalEventList.Add(new HospitalEvent
             {
+              EventId = _eventId++,
               PatiendId = patient.PatientId,
               HospitalId = patient.HospitalId,
               EventType = HospitalEventType.PatientArrival,
@@ -54,6 +57,7 @@ namespace PatientGenerator
           {
             hospitalEventList.Add(new HospitalEvent
             {
+              EventId = _eventId++,
               PatiendId = patientTakenInCharge.PatientId,
               HospitalId = patientTakenInCharge.HospitalId,
               EventType = HospitalEventType.PatientTakenInChargeByDoctor,
@@ -69,6 +73,7 @@ namespace PatientGenerator
           {
             hospitalEventList.Add(new HospitalEvent
             {
+              EventId = _eventId++,
               PatiendId = patientLeaving.PatientId,
               HospitalId = patientLeaving.HospitalId,
               EventType = HospitalEventType.PatientLeaving,
@@ -79,7 +84,7 @@ namespace PatientGenerator
 
           // Stored the new events in the database
           var dataBaseAccessBefore = stopWatch.ElapsedMilliseconds;
-          MedWatchDAL.InsertHospitalEvents(hospitalEventList);
+          MedWatchDAL.InsertBulkHospitalEvents(hospitalEventList);
           var dataBaseAccessAfter = stopWatch.ElapsedMilliseconds;
 
           // Added a debug trace 

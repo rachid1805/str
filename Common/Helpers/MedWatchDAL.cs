@@ -2,13 +2,61 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using Common.Entities;
+using System.Data;
 
 namespace Common.Helpers
 {
     public static class MedWatchDAL
     {
         private const string ConnectionString = "Data Source=127.0.0.1;Initial Catalog=MedWatch;Integrated Security=True";
-        
+
+        public static void InsertBulkHospitalEvents(IEnumerable<IHospitalEvent> events)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(ConnectionString))
+                {
+                    connection.Open();
+
+                    using (var bulkCopy = new SqlBulkCopy(ConnectionString))
+                    {
+                        // Create the data table
+                        DataTable table = new DataTable();
+                        table.Columns.Add("Id", typeof(int));
+                        table.Columns.Add("HospitalId", typeof(int));
+                        table.Columns.Add("PatientId", typeof(int));
+                        table.Columns.Add("EventType", typeof(short));
+                        table.Columns.Add("EventTimestamp", typeof(DateTime));
+                        table.Columns.Add("DiseaseType", typeof(short));
+                        table.Columns.Add("DoctorId", typeof(int));
+                        foreach (var e in events)
+                        {
+                            table.Rows.Add(e.EventId,
+                                           e.HospitalId,
+                                           e.PatiendId,
+                                           Convert.ToInt16(e.EventType),
+                                           e.EventTime,
+                                           e.DiseaseType,
+                                           e.DoctorId);
+                        }
+
+                        // Specify the destination table name in the database
+                        bulkCopy.DestinationTableName = "HospitalEvent";
+
+                        // Store in the database
+                        bulkCopy.WriteToServer(table);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            finally
+            {
+            }
+        }
+
         public static void InsertHospitalEvents( IEnumerable<IHospitalEvent> events )
         {
             SqlConnection conn = null;
@@ -73,7 +121,7 @@ namespace Common.Helpers
             }
             catch ( Exception ex )
             {
-                // TODO log error
+                Console.WriteLine(ex);
             }
             finally
             {
@@ -129,7 +177,7 @@ namespace Common.Helpers
             }
             catch ( Exception ex )
             {
-                // TODO log error
+                Console.WriteLine(ex);
             }
             finally
             {
@@ -173,7 +221,7 @@ namespace Common.Helpers
             }
             catch ( Exception ex )
             {
-                // TODO log error
+                Console.WriteLine(ex);
             }
             finally
             {
@@ -219,7 +267,7 @@ namespace Common.Helpers
             }
             catch (Exception ex)
             {
-                // TODO log error
+                Console.WriteLine(ex);
             }
             finally
             {
