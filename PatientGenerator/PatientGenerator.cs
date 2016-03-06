@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Xml;
 using Common.Entities;
 using Common.Helpers;
+using System.Diagnostics;
 
 namespace PatientGenerator
 {
@@ -56,7 +57,7 @@ namespace PatientGenerator
     public IPatientArrival GeneratePatientArrival()
     {
       var patientArrival = new PatientArrival(GeneratorHelper.RandomNumericalValue(int.MaxValue),
-                                              GeneratorHelper.RandomNumericalValue(_hospitals.Count),
+                                              _hospitals[GeneratorHelper.RandomNumericalValue(_hospitals.Count)].Id,
                                               _diseases[GeneratorHelper.RandomNumericalValue(_diseases.Count)],
                                               DateTime.Now);
 
@@ -72,7 +73,7 @@ namespace PatientGenerator
       var atLeastOneFreeDoctor = false;
       if (_patientsArrival.Count == 0)
       {
-        throw new ApplicationException("No patient in the arrival list");
+        return null;
       }
       foreach (var doctor in _freeDoctors)
       {
@@ -84,7 +85,7 @@ namespace PatientGenerator
       }
       if (!atLeastOneFreeDoctor)
       {
-        throw new ApplicationException("No doctor available");
+        return null;
       }
 
       IPatientTakenInChargeByDoctor patientTakenInChargeByDoctor = null;
@@ -94,7 +95,6 @@ namespace PatientGenerator
       while (!freeDoctor)
       {
         // Take a patient from the waiting list : FIFO
-        //var patientArrival = _patientsArrival[GeneratorHelper.RandomNumericalValue(_patientsArrival.Count)];
         var patientArrival = _patientsArrival[patientIndex];
         IList<int> freeDoctorsForThisHospital;
         _freeDoctors.TryGetValue(patientArrival.HospitalId, out freeDoctorsForThisHospital);
@@ -123,7 +123,7 @@ namespace PatientGenerator
         }
         else
         {
-          // No available doctor for this patient
+          // No available doctor for this patient. Other hospital !
           patientIndex = (patientIndex < (_patientsArrival.Count - 1)) ? ++patientIndex : 0;
         }
       }
@@ -131,17 +131,19 @@ namespace PatientGenerator
       return patientTakenInChargeByDoctor;
     }
 
-    public IPatientLeaving GeneratePatientLeaving()
+    public IPatientLeaving GeneratePatientLeaving(long timeOutMilliSec)
     {
       if (_patientsTakenInChargeByDoctor.Count == 0)
       {
-        throw new ApplicationException("No patient in the care list");
+        return null;
       }
 
       IPatientLeaving patientToLeave = null;
       var patientLeaving = false;
+      Stopwatch stopWatch = new Stopwatch();
+      stopWatch.Start();
 
-      while (!patientLeaving)
+      while (!patientLeaving && (stopWatch.ElapsedMilliseconds < timeOutMilliSec))
       {
         // Take a patient from the care list
         var patientTakenInCharge = _patientsTakenInChargeByDoctor[GeneratorHelper.RandomNumericalValue(_patientsTakenInChargeByDoctor.Count)];
@@ -168,7 +170,8 @@ namespace PatientGenerator
 
           patientLeaving = true;
         }
-      }    
+      }
+      stopWatch.Stop();
 
       return patientToLeave;
     }

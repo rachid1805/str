@@ -11,6 +11,6 @@ namespace PatientGenerator
   {
     IPatientArrival GeneratePatientArrival();
     IPatientTakenInChargeByDoctor GeneratePatientTakenInChargeByDoctor();
-    IPatientLeaving GeneratePatientLeaving();
+    IPatientLeaving GeneratePatientLeaving(long timeOutMilliSec);
   }
 }

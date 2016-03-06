@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Threading;
 using Common.Entities;
+using Common.Helpers;
 
 namespace PatientGenerator
 {
@@ -15,61 +12,89 @@ namespace PatientGenerator
     static void Main(string[] args)
     {
       // If a number of patient to generate in a period of time are not specified, exit program.
-      if (args.Length != 3)
+      if (args.Length != 2)
       {
         // Display the proper way to call the program.
-        Console.WriteLine("Usage: PatientArrivalGenerator.exe directory numberOfPatientsToGenerate periodOfTimeMs");
+        Console.WriteLine("Usage: numberOfPatientsToGenerate periodOfTimeMilliSec");
         return;
       }
 
-      string pathFile = args[0];
-      int numberOfPatientsToGenerate = int.Parse(args[1]);
-      int periodOfTimeMs = int.Parse(args[2]);
-
-      // Generation test
-      var generator = new PatientGenerator();
-      var iteration = 0;
-      Console.WriteLine("Patient Arrival");
-      Console.WriteLine("---------------");
-      while (++iteration < 100)
+      try
       {
-        Stopwatch sw = new Stopwatch();
-        sw.Start();
-        var patient = generator.GeneratePatientArrival();
-        sw.Stop();
-        long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.Disease.Priority + " " + patient.ArrivalTime + " : " + iteration + " en " + microseconds + " us");
-      }
+        int numberOfPatientsToGenerate = int.Parse(args[0]);
+        long periodOfTimeMilliSec = long.Parse(args[1]);
 
-      iteration = 0;
-      Console.WriteLine("");
-      Console.WriteLine("Patient Taken In Charge By Doctor");
-      Console.WriteLine("---------------------------------");
-      while (++iteration < 30)
+        var generator = new PatientGenerator();
+        Stopwatch stopWatch = new Stopwatch();
+        Console.WriteLine("Press ESC to stop");
+        while (!(Console.KeyAvailable && (Console.ReadKey(true).Key == ConsoleKey.Escape)))
+        {
+          var hospitalEventList = new List<HospitalEvent>();
+          var generatedPatientNb = 1;
+          stopWatch.Restart();
+
+          // Generated arrival patients
+          while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) && (generatedPatientNb <= numberOfPatientsToGenerate))
+          {
+            var patient = generator.GeneratePatientArrival();
+            hospitalEventList.Add(new HospitalEvent
+            {
+              PatiendId = patient.PatientId,
+              HospitalId = patient.HospitalId,
+              EventType = HospitalEventType.PatientArrival,
+              EventTime = patient.ArrivalTime,
+              DiseaseType = patient.Disease.Id
+            });
+            ++generatedPatientNb;
+          }
+
+          // Generated taken in charge patients
+          var patientTakenInCharge = generator.GeneratePatientTakenInChargeByDoctor();
+          while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) && (patientTakenInCharge != null))
+          {
+            hospitalEventList.Add(new HospitalEvent
+            {
+              PatiendId = patientTakenInCharge.PatientId,
+              HospitalId = patientTakenInCharge.HospitalId,
+              EventType = HospitalEventType.PatientTakenInChargeByDoctor,
+              EventTime = patientTakenInCharge.TakenInChargeByDoctorTime,
+              DoctorId = patientTakenInCharge.DoctorId
+            });
+            patientTakenInCharge = generator.GeneratePatientTakenInChargeByDoctor();
+          }
+
+          // Generated leaving patients
+          var patientLeaving = generator.GeneratePatientLeaving(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds);
+          while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) && (patientLeaving != null))
+          {
+            hospitalEventList.Add(new HospitalEvent
+            {
+              PatiendId = patientLeaving.PatientId,
+              HospitalId = patientLeaving.HospitalId,
+              EventType = HospitalEventType.PatientLeaving,
+              EventTime = patientLeaving.LeavingTime
+            });
+            patientLeaving = generator.GeneratePatientLeaving(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds);
+          }
+
+          // Stored the new events in the database
+          var dataBaseAccessBefore = stopWatch.ElapsedMilliseconds;
+          MedWatchDAL.InsertHospitalEvents(hospitalEventList);
+          var dataBaseAccessAfter = stopWatch.ElapsedMilliseconds;
+
+          // Added a debug trace 
+          Console.WriteLine("Generated and stored " + hospitalEventList.Count + " events in the database, elapsed time = " + stopWatch.ElapsedMilliseconds + " ms (DB Access = " + (dataBaseAccessAfter - dataBaseAccessBefore) + " ms)");
+
+          // Sleep the remaining time
+          Thread.Sleep((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) ? (int)(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds) : 0);
+          stopWatch.Stop();
+        }
+      }
+      catch (Exception ex)
       {
-        Stopwatch sw = new Stopwatch();
-        sw.Start();
-        var patient = generator.GeneratePatientTakenInChargeByDoctor();
-        sw.Stop();
-        long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.DoctorId + " " + patient.TakenInChargeByDoctorTime + " : " + iteration + " en " + microseconds + " us");
+        Console.WriteLine(ex);
+        return;
       }
-
-      iteration = 0;
-      Console.WriteLine("");
-      Console.WriteLine("Patient Leaving");
-      Console.WriteLine("---------------");
-      while (++iteration < 20)
-      {
-        Stopwatch sw = new Stopwatch();
-        sw.Start();
-        var patient = generator.GeneratePatientLeaving();
-        sw.Stop();
-        long microseconds = sw.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        Console.WriteLine("Patient " + patient.PatientId + " " + patient.HospitalId + " " + patient.LeavingTime + " : " + iteration + " en " + microseconds + " us");
-      }
-
-      Console.ReadKey();
     }
   }
 }
