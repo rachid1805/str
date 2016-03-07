@@ -12,18 +12,18 @@ namespace SurveillanceTempsReel.Actors
     /// </summary>
     public class HospitalCoordinatorActor : ReceiveActor
     {
-        private readonly uint _hospitalId;
+        private readonly int _hospitalId;
         private readonly string _hospitalName;
 
         private readonly Dictionary<StatisticType, IActorRef> _hospitalStatActors;
 
         private readonly IActorRef _dashboardActor;
 
-        public HospitalCoordinatorActor( uint hospitalId, string hospitalName, IActorRef dashboardActor )
+        public HospitalCoordinatorActor( int hospitalId, string hospitalName, IActorRef dashboardActor )
             : this( hospitalId, hospitalName, dashboardActor, new Dictionary<StatisticType, IActorRef>() )
         { }
 
-        public HospitalCoordinatorActor( uint hospitalId, string hospitalName, IActorRef dashboardActor, Dictionary<StatisticType, IActorRef> hospitalStatActors )
+        public HospitalCoordinatorActor( int hospitalId, string hospitalName, IActorRef dashboardActor, Dictionary<StatisticType, IActorRef> hospitalStatActors )
         {
             _hospitalId = hospitalId;
             _hospitalName = hospitalName;
@@ -61,6 +61,8 @@ namespace SurveillanceTempsReel.Actors
 
                 // désabonnement auprès de l'acteur du "dashboard"
                 _hospitalStatActors[ unwatch.Statistic ].Tell( new UnsubscribeStatistic( unwatch.Statistic, _dashboardActor ) );
+
+                // TODO : kill child?  (_hospitalStatActors[ unwatch.Statistic ])
 
                 // TODO : remove series
                 //_dashboardActor.Tell( )

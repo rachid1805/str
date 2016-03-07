@@ -29,7 +29,7 @@ namespace PatientGenerator
     public PatientGenerator()
     {
       _hospitals = MedWatchDAL.FindHospitals().ToList();
-      _diseases = MedWatchDAL.FindDiseses().ToList();
+      _diseases = MedWatchDAL.FindDiseases().ToList();
       _freeDoctors = new Dictionary<int, IList<int>>();
       _busyDoctors = new Dictionary<int, IList<int>>();
       _patientsArrival = new List<IPatientArrival>();

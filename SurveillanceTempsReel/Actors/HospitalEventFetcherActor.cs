@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Akka.Actor;
+using Akka.Event;
 using Common.Helpers;
 
 namespace SurveillanceTempsReel.Actors
@@ -13,22 +14,21 @@ namespace SurveillanceTempsReel.Actors
     /// </summary>
     public class HospitalEventFetcherActor : ReceiveActor
     {
-        private readonly uint _hospitalId;
+        private readonly int _hospitalId;
         private readonly string _connectionString;
 
-        private readonly HashSet<IActorRef> _subscriptions;
-        private readonly ICancelable _cancelFetching;
+        private HashSet<IActorRef> _subscriptions;
+        private ICancelable _cancelFetching;
 
         private int _lastEventId;
 
-        public HospitalEventFetcherActor( uint hospitalId, string connectionString )
+        private readonly ILoggingAdapter _log = Logging.GetLogger( Context );
+        
+        public HospitalEventFetcherActor( int hospitalId, string connectionString )
         {
             _hospitalId = hospitalId;
             _connectionString = connectionString;
-            _subscriptions = new HashSet<IActorRef>();
-            _cancelFetching = new Cancelable( Context.System.Scheduler );
-            _lastEventId = 0;
-
+            
             Fetching();
         }
 
@@ -36,7 +36,11 @@ namespace SurveillanceTempsReel.Actors
 
         protected override void PreStart()
         {
-            // TODO : init sql connection
+            _log.Debug( "PreStart" );
+
+            _subscriptions = new HashSet<IActorRef>();
+            _cancelFetching = new Cancelable( Context.System.Scheduler );
+            _lastEventId = 0;           // TODO restore state
 
             // cédule une tâche pour nous envoyer régulièrement un message
             // pour obtenir les derniers événements de l'hôpital
@@ -48,6 +52,14 @@ namespace SurveillanceTempsReel.Actors
                 Self,
                 _cancelFetching );
         }
+
+        // TODO : this is a good place to (see p.76):
+        // - stash messages?
+        // - save _lastEventId ?
+        //protected override void PreRestart( Exception reason, object message )
+        //{
+        //    base.PreRestart( reason, message );
+        //}
 
         protected override void PostStop()
         {
@@ -71,10 +83,10 @@ namespace SurveillanceTempsReel.Actors
         {
             Receive<FetchHostpitalEvents>( bof =>
             {
-                // TODO : maybe change hospitalId type to int... enough for project
-                var hospitalEvents = MedWatchDAL.FindHospitalEventsAfter( (int) _hospitalId, afterEventId: _lastEventId );
+                _log.Debug( $"Fetching hospital events after event id {_lastEventId}" );
+                var hospitalEvents = MedWatchDAL.FindHospitalEventsAfter( _hospitalId, afterEventId: _lastEventId );
 
-                // TODO convert to actor messages and propagate into system
+                _log.Debug( $"Number of events fetched: {hospitalEvents.Count()}" );
             } );
 
             Receive<SubscribeEventFetcher>( sc =>

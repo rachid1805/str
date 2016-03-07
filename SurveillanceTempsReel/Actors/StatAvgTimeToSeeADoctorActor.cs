@@ -11,13 +11,13 @@ namespace SurveillanceTempsReel.Actors
     /// </summary>
     public class StatAvgTimeToSeeADoctorActor : ReceiveActor
     {
-        private readonly uint _hospitalId;      // TODO : necessary?
+        private readonly int _hospitalId;      // TODO : necessary?
         private readonly string _hospitalName;
 
         private readonly HashSet<IActorRef> _subscriptions;
         private readonly ICancelable _cancelPublishing;
 
-        public StatAvgTimeToSeeADoctorActor( uint hospitalId, string hospitalName )
+        public StatAvgTimeToSeeADoctorActor( int hospitalId, string hospitalName )
         {
             _hospitalId = hospitalId;
             _hospitalName = hospitalName;
