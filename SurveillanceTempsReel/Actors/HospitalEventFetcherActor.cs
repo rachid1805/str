@@ -20,7 +20,7 @@ namespace SurveillanceTempsReel.Actors
         private HashSet<IActorRef> _subscriptions;
         private ICancelable _cancelFetching;
 
-        private int _lastEventId;
+        private uint _lastEventId;
 
         private readonly ILoggingAdapter _log = Logging.GetLogger( Context );
         

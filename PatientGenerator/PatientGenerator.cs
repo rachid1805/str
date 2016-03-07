@@ -21,6 +21,7 @@ namespace PatientGenerator
     private readonly IList<IPatientTakenInChargeByDoctor> _patientsTakenInChargeByDoctor;
     private readonly IList<IPatientLeaving> _patientsLeaving;
     private readonly IList<Disease> _diseases;
+    private readonly IComparer<IPatientArrival> _comparer;
 
     #endregion
 
@@ -35,6 +36,7 @@ namespace PatientGenerator
       _patientsArrival = new List<IPatientArrival>();
       _patientsTakenInChargeByDoctor = new List<IPatientTakenInChargeByDoctor>();
       _patientsLeaving = new List<IPatientLeaving>();
+      _comparer = new ArrivalComparer();
 
       // Assign doctors to each hospital
       foreach (var hospital in _hospitals)
@@ -63,12 +65,12 @@ namespace PatientGenerator
 
       // Keep the new generated patient in the arrival list
       _patientsArrival.Add(patientArrival);
-      _patientsArrival.Sort(new ArrivalComparer());
+      _patientsArrival.Sort(_comparer);
 
       return patientArrival;
     }
 
-    public IPatientTakenInChargeByDoctor GeneratePatientTakenInChargeByDoctor()
+    public IPatientTakenInChargeByDoctor GeneratePatientTakenInChargeByDoctor(long timeOutMilliSec)
     {
       var atLeastOneFreeDoctor = false;
       if (_patientsArrival.Count == 0)
@@ -91,8 +93,10 @@ namespace PatientGenerator
       IPatientTakenInChargeByDoctor patientTakenInChargeByDoctor = null;
       var freeDoctor = false;
       var patientIndex = 0;
+      Stopwatch stopWatch = new Stopwatch();
+      stopWatch.Start();
 
-      while (!freeDoctor)
+      while (!freeDoctor && (stopWatch.ElapsedMilliseconds < timeOutMilliSec))
       {
         // Take a patient from the waiting list : FIFO
         var patientArrival = _patientsArrival[patientIndex];
@@ -218,20 +222,24 @@ namespace PatientGenerator
         {
           result = -1;
         }
-        else if (y.Disease.Priority < x.Disease.Priority)
+        else if (x.Disease.Priority > y.Disease.Priority)
         {
           result = 1;
         }
         else
         {
           // The same disease priority, arrival time comparison
-          if (x.ArrivalTime <= y.ArrivalTime)
+          if (x.ArrivalTime < y.ArrivalTime)
           {
             result = -1;
           }
-          else
+          else if (x.ArrivalTime > y.ArrivalTime)
           {
             result = 1;
+          }
+          else
+          {
+            result = 0;
           }
         }
 
