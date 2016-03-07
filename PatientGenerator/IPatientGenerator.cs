@@ -10,7 +10,7 @@ namespace PatientGenerator
   public interface IPatientGenerator
   {
     IPatientArrival GeneratePatientArrival();
-    IPatientTakenInChargeByDoctor GeneratePatientTakenInChargeByDoctor();
+    IPatientTakenInChargeByDoctor GeneratePatientTakenInChargeByDoctor(long timeOutMilliSec);
     IPatientLeaving GeneratePatientLeaving(long timeOutMilliSec);
   }
 }

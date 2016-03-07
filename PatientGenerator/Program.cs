@@ -52,7 +52,7 @@ namespace PatientGenerator
           }
 
           // Generated taken in charge patients
-          var patientTakenInCharge = generator.GeneratePatientTakenInChargeByDoctor();
+          var patientTakenInCharge = generator.GeneratePatientTakenInChargeByDoctor(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds);
           while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) && (patientTakenInCharge != null))
           {
             hospitalEventList.Add(new HospitalEvent
@@ -64,7 +64,7 @@ namespace PatientGenerator
               EventTime = patientTakenInCharge.TakenInChargeByDoctorTime,
               DoctorId = patientTakenInCharge.DoctorId
             });
-            patientTakenInCharge = generator.GeneratePatientTakenInChargeByDoctor();
+            patientTakenInCharge = generator.GeneratePatientTakenInChargeByDoctor(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds);
           }
 
           // Generated leaving patients

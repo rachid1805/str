@@ -19,7 +19,7 @@ namespace SurveillanceTempsReel.Actors
         private readonly HashSet<IActorRef> _subscriptions;
         private readonly ICancelable _cancelFetching;
 
-        private int _lastEventId;
+        private uint _lastEventId;
 
         public HospitalEventFetcherActor( uint hospitalId, string connectionString )
         {
