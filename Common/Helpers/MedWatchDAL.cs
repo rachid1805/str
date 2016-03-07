@@ -129,7 +129,7 @@ namespace Common.Helpers
             }
         }
 
-        public static IEnumerable<IHospitalEvent> FindHospitalEventsAfter( int hospitalId, uint afterEventId )
+        public static IEnumerable<IHospitalEvent> FindHospitalEventsAfter( int hospitalId, int afterEventId )
         {
             var events = new List<IHospitalEvent>();
             
