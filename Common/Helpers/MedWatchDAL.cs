@@ -3,15 +3,21 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using Common.Entities;
 using System.Data;
+using System.Diagnostics;
 
 namespace Common.Helpers
 {
     public static class MedWatchDAL
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         private const string ConnectionString = "Data Source=127.0.0.1;Initial Catalog=MedWatch;Integrated Security=True";
 
         public static void InsertBulkHospitalEvents(IEnumerable<IHospitalEvent> events)
         {
+            logger.Trace( "InsertBulkHospitalEvents called" );
+            var sw = Stopwatch.StartNew();
+
             using (SqlConnection connection = new SqlConnection(ConnectionString))
             {
                 try
@@ -51,9 +57,12 @@ namespace Common.Helpers
                 }
                 catch ( Exception ex )
                 {
-                    Console.WriteLine( ex );
+                    logger.Error( "ERROR: {0}", ex );
                 }
             }
+
+            sw.Stop();
+            logger.Trace( "InsertBulkHospitalEvents completed in {0} ms", sw.ElapsedMilliseconds );
         }
 
         // TODO remove this
@@ -131,6 +140,9 @@ namespace Common.Helpers
 
         public static IEnumerable<IHospitalEvent> FindHospitalEventsAfter( int hospitalId, int afterEventId )
         {
+            logger.Trace( "FindHospitalEventsAfter called" );
+            var sw = Stopwatch.StartNew();
+
             var events = new List<IHospitalEvent>();
             
             try
@@ -179,9 +191,12 @@ namespace Common.Helpers
             }
             catch ( Exception ex )
             {
-                Console.WriteLine(ex);
+                logger.Error( "ERROR: {0}", ex );
             }
-          
+
+            sw.Stop();
+            logger.Trace( "FindHospitalEventsAfter completed in {0} ms", sw.ElapsedMilliseconds );
+
             return events;
         }
 
@@ -221,7 +236,7 @@ namespace Common.Helpers
             }
             catch ( Exception ex )
             {
-                Console.WriteLine(ex);
+                logger.Error( "ERROR: {0}", ex );
             }
           
             return hospitals;
@@ -266,7 +281,7 @@ namespace Common.Helpers
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                logger.Error( "ERROR: {0}", ex );
             }
           
             return diseases;

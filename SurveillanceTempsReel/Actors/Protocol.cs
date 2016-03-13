@@ -21,8 +21,21 @@ namespace SurveillanceTempsReel.Actors
 
     public class GatherStats { }
 
-    public class FetchHostpitalEvents { }
+    public class Stat
+    {
+        public string Series { get; private set; }
 
+        public float CounterValue { get; private set; }
+
+        public Stat( string series, float counterValue )
+        {
+            CounterValue = counterValue;
+            Series = series;
+        }
+    }
+
+    public class FetchHostpitalEvents { }
+    
     public class Watch
     {
         public StatisticType Statistic { get; private set; }
