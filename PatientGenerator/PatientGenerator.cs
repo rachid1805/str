@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.IO;
-using System.Reflection;
-using System.Xml;
 using Common.Entities;
 using Common.Helpers;
 using System.Diagnostics;
@@ -17,11 +14,11 @@ namespace PatientGenerator
     private readonly IList<Hospital> _hospitals;
     private readonly IDictionary<int, IList<int>> _freeDoctors;
     private readonly IDictionary<int, IList<int>> _busyDoctors;
-    private readonly List<IPatientArrival> _patientsArrival;
+    private readonly IDictionary<DiseasePriority, IList<IPatientArrival>> _patientsArrival;
     private readonly IList<IPatientTakenInChargeByDoctor> _patientsTakenInChargeByDoctor;
     private readonly IList<IPatientLeaving> _patientsLeaving;
     private readonly IList<Disease> _diseases;
-    private readonly IComparer<IPatientArrival> _comparer;
+    private readonly Stopwatch _stopWatch;
 
     #endregion
 
@@ -33,10 +30,9 @@ namespace PatientGenerator
       _diseases = MedWatchDAL.FindDiseases().ToList();
       _freeDoctors = new Dictionary<int, IList<int>>();
       _busyDoctors = new Dictionary<int, IList<int>>();
-      _patientsArrival = new List<IPatientArrival>();
       _patientsTakenInChargeByDoctor = new List<IPatientTakenInChargeByDoctor>();
       _patientsLeaving = new List<IPatientLeaving>();
-      _comparer = new ArrivalComparer();
+      _stopWatch = new Stopwatch();
 
       // Assign doctors to each hospital
       foreach (var hospital in _hospitals)
@@ -50,11 +46,18 @@ namespace PatientGenerator
         _freeDoctors.Add(hospital.Id, doctorsList);
         _busyDoctors.Add(hospital.Id, new List<int>());
       }
+
+      // Creates the patient arrival sorted dictionary
+      _patientsArrival = new SortedDictionary<DiseasePriority, IList<IPatientArrival>>();
+      for (var diseasePriority = DiseasePriority.VeryHigh; diseasePriority < DiseasePriority.Invalid; ++diseasePriority)
+      {
+        _patientsArrival.Add(diseasePriority, new List<IPatientArrival>());
+      }
     }
 
     #endregion
 
-    #region IPatientLeaving implementation
+    #region IPatientGenerator implementation
 
     public IPatientArrival GeneratePatientArrival()
     {
@@ -64,75 +67,87 @@ namespace PatientGenerator
                                               DateTime.Now);
 
       // Keep the new generated patient in the arrival list
-      _patientsArrival.Add(patientArrival);
-      _patientsArrival.Sort(_comparer);
+      _patientsArrival[patientArrival.Disease.Priority].Add(patientArrival);
 
       return patientArrival;
     }
 
     public IPatientTakenInChargeByDoctor GeneratePatientTakenInChargeByDoctor(long timeOutMilliSec)
     {
-      var atLeastOneFreeDoctor = false;
-      if (_patientsArrival.Count == 0)
-      {
-        return null;
-      }
-      foreach (var doctor in _freeDoctors)
-      {
-        if (doctor.Value.Count != 0)
-        {
-          atLeastOneFreeDoctor = true;
-          break;
-        }
-      }
-      if (!atLeastOneFreeDoctor)
+      // Free doctor ?
+      if (_freeDoctors.All(doctor => doctor.Value.Count == 0))
       {
         return null;
       }
 
-      IPatientTakenInChargeByDoctor patientTakenInChargeByDoctor = null;
-      var freeDoctor = false;
-      var patientIndex = 0;
-      Stopwatch stopWatch = new Stopwatch();
-      stopWatch.Start();
-
-      while (!freeDoctor && (stopWatch.ElapsedMilliseconds < timeOutMilliSec))
+      // Waiting patient ?
+      var diseasePriority = DiseasePriority.Invalid;
+      IList<IPatientArrival> patientList = null;
+      foreach (var patient in _patientsArrival.Where(patient => patient.Value.Count != 0))
       {
-        // Take a patient from the waiting list : FIFO
-        var patientArrival = _patientsArrival[patientIndex];
-        IList<int> freeDoctorsForThisHospital;
-        _freeDoctors.TryGetValue(patientArrival.HospitalId, out freeDoctorsForThisHospital);
+        diseasePriority = patient.Key;
+        patientList = _patientsArrival[diseasePriority];
+        break;
+      }
+      if ((patientList == null) || (patientList.Count == 0))
+      {
+        return null;
+      }
+      
+      var patientPriority = 0;
+      _stopWatch.Restart();
 
-        if ((freeDoctorsForThisHospital != null) && (freeDoctorsForThisHospital.Count != 0))
+      while (_stopWatch.ElapsedMilliseconds < timeOutMilliSec)
+      {
+        if (patientList.Count != 0)
         {
-          // Choose one free doctor
-          var doctorId = freeDoctorsForThisHospital[GeneratorHelper.RandomNumericalValue(freeDoctorsForThisHospital.Count)];
+          // Take a patient from the waiting list
+          var patientArrival = patientList[patientPriority];
+          IList<int> freeDoctorsForThisHospital;
+          _freeDoctors.TryGetValue(patientArrival.HospitalId, out freeDoctorsForThisHospital);
 
-          // Add this doctor to the busy list
-          IList<int> busyDoctorsForThisHospital;
-          _busyDoctors.TryGetValue(patientArrival.HospitalId, out busyDoctorsForThisHospital);
-          busyDoctorsForThisHospital.Add(doctorId);
+          if ((freeDoctorsForThisHospital != null) && (freeDoctorsForThisHospital.Count != 0))
+          {
+            // Choose one free doctor
+            var doctorId = freeDoctorsForThisHospital[GeneratorHelper.RandomNumericalValue(freeDoctorsForThisHospital.Count)];
 
-          // Remove this doctor from the free list
-          freeDoctorsForThisHospital.Remove(doctorId);
+            // Add this doctor to the busy list
+            IList<int> busyDoctorsForThisHospital;
+            _busyDoctors.TryGetValue(patientArrival.HospitalId, out busyDoctorsForThisHospital);
+            busyDoctorsForThisHospital.Add(doctorId);
 
-          // Keep the new generated patient in the care list
-          patientTakenInChargeByDoctor = new PatientTakenInChargeByDoctor(patientArrival.PatientId, patientArrival.HospitalId, DateTime.Now, doctorId, patientArrival.Disease);
-          _patientsTakenInChargeByDoctor.Add(patientTakenInChargeByDoctor);
+            // Remove this doctor from the free list
+            freeDoctorsForThisHospital.Remove(doctorId);
 
-          // Remove this patient from the arrival list
-          _patientsArrival.Remove(patientArrival);
+            // Keep the new generated patient in the care list
+            var patientTakenInChargeByDoctor = new PatientTakenInChargeByDoctor(patientArrival.PatientId, patientArrival.HospitalId, DateTime.Now, doctorId, patientArrival.Disease);
+            _patientsTakenInChargeByDoctor.Add(patientTakenInChargeByDoctor);
 
-          freeDoctor = true;
-        }
-        else
-        {
-          // No available doctor for this patient. Other hospital !
-          patientIndex = (patientIndex < (_patientsArrival.Count - 1)) ? ++patientIndex : 0;
+            // Remove this patient from the arrival list
+            patientList.Remove(patientArrival);
+            _stopWatch.Stop();
+
+            return patientTakenInChargeByDoctor;
+          }
+
+          // Next patient in the same disease priority !
+          if (++patientPriority >= patientList.Count)
+          {
+            // Next disease priority !
+            if (++diseasePriority >= DiseasePriority.Invalid)
+            {
+              // Parsed all diseases and all patients
+              _stopWatch.Stop();
+              return null;
+            }
+            patientList = _patientsArrival[diseasePriority];
+            patientPriority = 0;
+          }
         }
       }
+      _stopWatch.Stop();
 
-      return patientTakenInChargeByDoctor;
+      return null;
     }
 
     public IPatientLeaving GeneratePatientLeaving(long timeOutMilliSec)
@@ -144,10 +159,9 @@ namespace PatientGenerator
 
       IPatientLeaving patientToLeave = null;
       var patientLeaving = false;
-      Stopwatch stopWatch = new Stopwatch();
-      stopWatch.Start();
+      _stopWatch.Restart();
 
-      while (!patientLeaving && (stopWatch.ElapsedMilliseconds < timeOutMilliSec))
+      while (!patientLeaving && (_stopWatch.ElapsedMilliseconds < timeOutMilliSec))
       {
         // Take a patient from the care list
         var patientTakenInCharge = _patientsTakenInChargeByDoctor[GeneratorHelper.RandomNumericalValue(_patientsTakenInChargeByDoctor.Count)];
@@ -175,7 +189,7 @@ namespace PatientGenerator
           patientLeaving = true;
         }
       }
-      stopWatch.Stop();
+      _stopWatch.Stop();
 
       return patientToLeave;
     }
@@ -186,7 +200,7 @@ namespace PatientGenerator
 
     private int ConvertElapsedTimeFromMsTo(int timeMilliSec, RequiredTimeUnit timeUnit)
     {
-      var convertedTime = 0;
+      int convertedTime;
 
       switch (timeUnit)
       {
@@ -204,47 +218,6 @@ namespace PatientGenerator
       }
 
       return convertedTime;
-    }
-
-    private class ArrivalComparer : IComparer<IPatientArrival>
-    {
-      int IComparer<IPatientArrival>.Compare(IPatientArrival x, IPatientArrival y)
-      {
-        var result = 0;
-
-        if ((x == null) || (y == null))
-        {
-          throw new NotSupportedException("Cannot compare null pointer");
-        }
-
-        // Disease priority comparison
-        if (x.Disease.Priority < y.Disease.Priority)
-        {
-          result = -1;
-        }
-        else if (x.Disease.Priority > y.Disease.Priority)
-        {
-          result = 1;
-        }
-        else
-        {
-          // The same disease priority, arrival time comparison
-          if (x.ArrivalTime < y.ArrivalTime)
-          {
-            result = -1;
-          }
-          else if (x.ArrivalTime > y.ArrivalTime)
-          {
-            result = 1;
-          }
-          else
-          {
-            result = 0;
-          }
-        }
-
-        return result;
-      }
     }
 
     #endregion

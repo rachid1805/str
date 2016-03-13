@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using Common.Entities;
 using Common.Helpers;
 
 namespace PatientGenerator
 {
-    class Program
+    public class Program
     {
-        private static NLog.Logger s_logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly NLog.Logger s_logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             s_logger.Info("PatientGenerator starting");
 
@@ -23,15 +24,21 @@ namespace PatientGenerator
                 return;
             }
 
-            int _eventId = 0;
+            var _eventId = 0;
 
             try
             {
-                int numberOfPatientsToGenerate = int.Parse(args[0]);
-                long periodOfTimeMilliSec = long.Parse(args[1]);
-                
+                var numberOfPatientsToGenerate = int.Parse(args[0]);
+                var periodOfTimeMilliSec = long.Parse(args[1]);
+
+                //foreach (var hospital in MedWatchDAL.FindHospitals())
+                //{
+                //    IList<IHospitalEvent> events = MedWatchDAL.FindHospitalEventsAfter(hospital.Id, 0).Where(hospitalEvent => hospitalEvent.EventType == HospitalEventType.PatientTakenInChargeByDoctor).ToList();
+                //}
+
                 var generator = new PatientGenerator();
-                Stopwatch stopWatch = new Stopwatch();
+                var stopWatch = new Stopwatch();
+                Console.WriteLine("Try to generate " + numberOfPatientsToGenerate + " patients in " + periodOfTimeMilliSec + " ms");
                 Console.WriteLine("Press ESC to stop");
                 while (!(Console.KeyAvailable && (Console.ReadKey(true).Key == ConsoleKey.Escape)))
                 {
@@ -56,8 +63,9 @@ namespace PatientGenerator
                     }
 
                     // Generated taken in charge patients
-                    var patientTakenInCharge = generator.GeneratePatientTakenInChargeByDoctor(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds);
-                    while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) && (patientTakenInCharge != null))
+                    IPatientTakenInChargeByDoctor patientTakenInCharge;
+                    while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) &&
+                           ((patientTakenInCharge = generator.GeneratePatientTakenInChargeByDoctor(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds)) != null))
                     {
                         hospitalEventList.Add(new HospitalEvent
                         {
@@ -66,14 +74,15 @@ namespace PatientGenerator
                             HospitalId = patientTakenInCharge.HospitalId,
                             EventType = HospitalEventType.PatientTakenInChargeByDoctor,
                             EventTime = patientTakenInCharge.TakenInChargeByDoctorTime,
+                            DiseaseType = patientTakenInCharge.Disease.Id,
                             DoctorId = patientTakenInCharge.DoctorId
                         });
-                        patientTakenInCharge = generator.GeneratePatientTakenInChargeByDoctor(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds);
                     }
 
                     // Generated leaving patients
-                    var patientLeaving = generator.GeneratePatientLeaving(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds);
-                    while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) && (patientLeaving != null))
+                    IPatientLeaving patientLeaving;
+                    while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) &&
+                           ((patientLeaving = generator.GeneratePatientLeaving(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds)) != null))
                     {
                         hospitalEventList.Add(new HospitalEvent
                         {
@@ -83,7 +92,6 @@ namespace PatientGenerator
                             EventType = HospitalEventType.PatientLeaving,
                             EventTime = patientLeaving.LeavingTime
                         });
-                        patientLeaving = generator.GeneratePatientLeaving(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds);
                     }
 
                     // Stored the new events in the database
@@ -92,7 +100,7 @@ namespace PatientGenerator
                     var dataBaseAccessAfter = stopWatch.ElapsedMilliseconds;
 
                     // Added a debug trace 
-                    Console.WriteLine("Generated and stored " + hospitalEventList.Count + " events in the database, elapsed time = " + stopWatch.ElapsedMilliseconds + " ms (DB Access = " + (dataBaseAccessAfter - dataBaseAccessBefore) + " ms)");
+                    //Console.WriteLine("Generated and stored " + hospitalEventList.Count + " events in the database, elapsed time = " + stopWatch.ElapsedMilliseconds + " ms (DB Access = " + (dataBaseAccessAfter - dataBaseAccessBefore) + " ms)");
                     s_logger.Trace("Generated and stored {0} events in the database, elapsed time = {1} ms (DB Access = {2} ms)", hospitalEventList.Count, stopWatch.ElapsedMilliseconds, (dataBaseAccessAfter - dataBaseAccessBefore));
 
                     // Sleep the remaining time
