@@ -7,9 +7,9 @@ namespace SurveillanceTempsReel
     static class Program
     {
         /// <summary>
-        /// Notre système d'acteurs.
+        /// Le système d'acteurs
         /// </summary>
-        public static ActorSystem MedWatchActors;
+        public static ActorSystem MediWatchActors;
 
         /// <summary>
         /// The main entry point for the application.
@@ -17,7 +17,7 @@ namespace SurveillanceTempsReel
         [STAThread]
         static void Main()
         {
-            MedWatchActors = ActorSystem.Create("MedWatchActors");
+            MediWatchActors = ActorSystem.Create( Actors.ActorPaths.MediWatchActorSystemName );
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault( false );
             Application.Run( new Dashboard() );

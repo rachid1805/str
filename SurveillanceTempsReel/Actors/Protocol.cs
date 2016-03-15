@@ -14,7 +14,7 @@ namespace SurveillanceTempsReel.Actors
     {
         AvgTimeToSeeADoctor,
         AvgAppointmentDuration,
-        IllnessCount,
+        Illness,
     }
 
     #region Message types

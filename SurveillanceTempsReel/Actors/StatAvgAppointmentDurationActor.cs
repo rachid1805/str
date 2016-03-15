@@ -1,24 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Akka.Actor;
+using Common.Entities;
 
 namespace SurveillanceTempsReel.Actors
 {
     public class StatAvgAppointmentDurationActor : ReceiveActor
     {
-        private readonly int _hospitalId;      // TODO : necessary?
-        private readonly string _hospitalName;
+        private readonly Hospital _hospital;
+        
+        private readonly IActorRef _hospitalCoordinator;
 
         private readonly HashSet<IActorRef> _subscriptions;
 
-        public StatAvgAppointmentDurationActor( int hospitalId, string hospitalName )
+        private readonly ICancelable _cancelPublishing;
+
+        public StatAvgAppointmentDurationActor( Hospital hospital, IActorRef hospitalCoordinator )
         {
-            _hospitalId = hospitalId;
-            _hospitalName = hospitalName;
-
-
+            _hospital = hospital;
+            _hospitalCoordinator = hospitalCoordinator;
+            _subscriptions = new HashSet<IActorRef>();
+            _cancelPublishing = new Cancelable( Context.System.Scheduler );
         }
     }
 }

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Drawing;
+using System.Windows.Forms.DataVisualization.Charting;
 using Akka.Actor;
+using Akka.Routing;
+using Common.Entities;
 
 namespace SurveillanceTempsReel.Actors
 {
@@ -12,61 +13,73 @@ namespace SurveillanceTempsReel.Actors
     /// </summary>
     public class HospitalCoordinatorActor : ReceiveActor
     {
-        private readonly int _hospitalId;
-        private readonly string _hospitalName;
+        #region Fields and constants
+
+        private readonly Hospital _hospital;
 
         private readonly Dictionary<StatisticType, IActorRef> _hospitalStatActors;
-
+        
         private readonly IActorRef _dashboardActor;
 
-        public HospitalCoordinatorActor( int hospitalId, string hospitalName, IActorRef dashboardActor )
-            : this( hospitalId, hospitalName, dashboardActor, new Dictionary<StatisticType, IActorRef>() )
-        { }
+        private IActorRef _coordinatorActor;
 
-        public HospitalCoordinatorActor( int hospitalId, string hospitalName, IActorRef dashboardActor, Dictionary<StatisticType, IActorRef> hospitalStatActors )
+        #endregion
+
+        #region Constructors
+
+        public HospitalCoordinatorActor( Hospital hospital, IActorRef dashboardActor )
         {
-            _hospitalId = hospitalId;
-            _hospitalName = hospitalName;
+            _hospital = hospital;
             _dashboardActor = dashboardActor;
-            _hospitalStatActors = hospitalStatActors;
-            
-            Receive<Watch>( watch =>
+            _hospitalStatActors = new Dictionary<StatisticType, IActorRef>();
+        }
+
+        #endregion 
+
+        protected override void PreStart()
+        {
+            // crée un acteur enfant pour chacune des statistiques à surveiller
+
+            // stat 1
             {
-                if ( !_hospitalStatActors.ContainsKey( watch.Statistic ) )
-                {
-                    // pas très évolutif comme code, mais fait l'affaire dans le contexte du projet.
-                    IActorRef statActor = null;
+                var actorStat1 = Context.ActorOf( Props.Create( () => new StatAvgTimeToSeeADoctorActor( _hospital, Self ) ), ActorPaths.StatAvgTimeToSeeADoctorActorName );
+                _hospitalStatActors[ StatisticType.AvgTimeToSeeADoctor ] = actorStat1;
 
-                    if ( watch.Statistic == StatisticType.AvgTimeToSeeADoctor )
-                        statActor = Context.ActorOf( Props.Create( () => new StatAvgTimeToSeeADoctorActor( hospitalId, hospitalName ) ) );
-                    else if ( watch.Statistic == StatisticType.AvgAppointmentDuration )
-                        statActor = Context.ActorOf( Props.Create( () => new StatAvgAppointmentDurationActor( hospitalId, hospitalName ) ) );
-                    else
-                        throw new Exception( $"missing handler for stat type: {watch.Statistic}" );
-                    
-                    _hospitalStatActors[ watch.Statistic ] = statActor;
-                }
-
-                // TODO : send message to dashboard actor to register series
-                //_dashboardActor.Tell( )
+                // TODO JS : 
+                // - Create message e.g. "SelectHospitalForChart"
+                // - When rightful coordinator receive msg, send messages to dashboard actor to initialize, then register series
+                // - Stat actors that are for selected hospital must stop sending to dashboard actor, but continue updating perf. counters
+                //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart() );
+                _dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart( new Series( StatisticType.AvgTimeToSeeADoctor.ToString() ) { ChartType = SeriesChartType.FastLine, Color = Color.DarkGreen } ) );
 
                 // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
-                _hospitalStatActors[ watch.Statistic ].Tell( new SubscribeStatistic( watch.Statistic, _dashboardActor ) );
-            } );
+                _hospitalStatActors[ StatisticType.AvgTimeToSeeADoctor ].Tell( new SubscribeStatistic( StatisticType.AvgTimeToSeeADoctor, _dashboardActor ) );
+            }
 
-            Receive<Unwatch>( unwatch =>
+            // stat 2
             {
-                if ( !_hospitalStatActors.ContainsKey( unwatch.Statistic ) )
-                    return;
+                var actorStat2 = Context.ActorOf( Props.Create( () => new StatAvgAppointmentDurationActor( _hospital, Self ) ), ActorPaths.StatAvgAppointmentDurationActorName );
+                _hospitalStatActors[ StatisticType.AvgAppointmentDuration ] = actorStat2;
 
-                // désabonnement auprès de l'acteur du "dashboard"
-                _hospitalStatActors[ unwatch.Statistic ].Tell( new UnsubscribeStatistic( unwatch.Statistic, _dashboardActor ) );
+                _hospitalStatActors[ StatisticType.AvgAppointmentDuration ].Tell( new SubscribeStatistic( StatisticType.AvgAppointmentDuration, _dashboardActor ) );
+            }
 
-                // TODO : kill child?  (_hospitalStatActors[ unwatch.Statistic ])
+            // stat 3
+            // TODO
 
-                // TODO : remove series
-                //_dashboardActor.Tell( )
-            } );
+            // crée un routeur pour broadcaster les messages vers les acteurs de statistiques
+            // TODO ajouter les paths des autres acteurs de stats 
+            _coordinatorActor = Context.ActorOf( Props.Empty.WithRouter( new BroadcastGroup(
+               ActorPaths.GetActorPath( ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id ),
+               ActorPaths.GetActorPath( ActorType.StatAvgAppointmentDurationActor, _hospital.Id ) ) ) );
+
+            base.PreStart();
+        }
+
+        protected override void PreRestart( Exception reason, object message )
+        {
+            _coordinatorActor.Tell( PoisonPill.Instance );
+            base.PreRestart( reason, message );
         }
     }
 }

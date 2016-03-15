@@ -86,6 +86,10 @@ namespace SurveillanceTempsReel.Actors
                 _log.Debug( $"Fetching hospital events after event id {_lastEventId}" );
                 var hospitalEvents = MedWatchDAL.FindHospitalEventsAfter( _hospitalId, afterEventId: _lastEventId );
 
+                // TODO JS send messages
+
+                // TODO JS update _lastEventId
+
                 _log.Debug( $"Number of events fetched: {hospitalEvents.Count()}" );
             } );
 

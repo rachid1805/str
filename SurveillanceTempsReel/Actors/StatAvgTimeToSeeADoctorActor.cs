@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Akka.Actor;
+using Common.Entities;
 
 namespace SurveillanceTempsReel.Actors
 {
@@ -11,18 +10,28 @@ namespace SurveillanceTempsReel.Actors
     /// </summary>
     public class StatAvgTimeToSeeADoctorActor : ReceiveActor
     {
-        private readonly int _hospitalId;      // TODO : necessary?
-        private readonly string _hospitalName;
+        #region Fields and constants
+
+        private readonly Hospital _hospital;
+
+        private readonly IActorRef _hospitalCoordinator;
 
         private readonly HashSet<IActorRef> _subscriptions;
+
         private readonly ICancelable _cancelPublishing;
 
-        public StatAvgTimeToSeeADoctorActor( int hospitalId, string hospitalName )
+        private Random _rnd;        // TODO temp
+
+        #endregion
+
+        public StatAvgTimeToSeeADoctorActor( Hospital hospital, IActorRef hospitalCoordinator )
         {
-            _hospitalId = hospitalId;
-            _hospitalName = hospitalName;
+            _hospital = hospital;
+            _hospitalCoordinator = hospitalCoordinator;
             _subscriptions = new HashSet<IActorRef>();
             _cancelPublishing = new Cancelable( Context.System.Scheduler );
+
+            _rnd = new Random();
 
             Processing();
         }
@@ -64,8 +73,10 @@ namespace SurveillanceTempsReel.Actors
         {
             Receive<GatherStats>( bof =>
             {
-                // TODO  : send updated data to dashboard
-                
+                // TODO
+                var stat = new Stat( StatisticType.AvgTimeToSeeADoctor.ToString(), (float)_rnd.NextDouble() );
+                foreach ( var sub in _subscriptions )
+                    sub.Tell( stat );
             } );
 
             Receive<SubscribeStatistic>( sc =>

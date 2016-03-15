@@ -68,8 +68,10 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actors\ActorPaths.cs" />
     <Compile Include="Actors\DashboardActor.cs" />
     <Compile Include="Actors\HospitalEventFetcherActor.cs" />
+    <Compile Include="Actors\MediWatchCommanderActor.cs" />
     <Compile Include="Actors\StatAvgAppointmentDurationActor.cs" />
     <Compile Include="Actors\StatAvgTimeToSeeADoctorActor.cs" />
     <Compile Include="Actors\HospitalCoordinatorActor.cs" />
