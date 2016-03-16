@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
 using Akka.Actor;
@@ -14,7 +15,7 @@ namespace SurveillanceTempsReel
         #region Fields and constants
 
         public const string AppName = "Système de surveillance médicale";
-
+        
         private IActorRef _dashboardActor;
 
         private IActorRef _commanderActor;
@@ -30,19 +31,35 @@ namespace SurveillanceTempsReel
 
         private void Dashboard_Load( object sender, EventArgs e )
         {
-            this.Text = AppName;
+            try
+            {
+                this.Text = AppName;
 
-            // TODO JS peut-etre laisser exception se propager jusqu'au client?
-            var hospitals = MedWatchDAL.FindHospitals();
+                // TODO JS peut-etre laisser exception se propager jusqu'au client?
+                var hospitals = MedWatchDAL.FindHospitals();
 
-            LoadHospitalComboBox(hospitals);
+                // TODO temp
+                var htemp = new[] { hospitals.First() };
 
-            // initialization de l'acteur pour le tableau de bord
-            _dashboardActor = Program.MediWatchActors.ActorOf( Props.Create( () => new DashboardActor( statChart, btnPause ) ), ActorPaths.DashboardActorName );
-            _dashboardActor.Tell( new DashboardActor.InitializeStatChart( null ) );
+                InitPerformanceCounters( htemp );
+                LoadHospitalComboBox( htemp );
 
-            // initialization du commander
-            _commanderActor = Program.MediWatchActors.ActorOf( Props.Create( () => new MediWatchCommanderActor( hospitals, _dashboardActor ) ) );
+                //LoadHospitalComboBox( hospitals );
+
+
+
+                // initialization de l'acteur pour le tableau de bord
+                _dashboardActor = Program.MediWatchActors.ActorOf( Props.Create( () => new DashboardActor( statChart, btnPause ) ), ActorPaths.DashboardActorName );
+                _dashboardActor.Tell( new DashboardActor.InitializeStatChart( null ) );
+
+                // initialization du commander
+                _commanderActor = Program.MediWatchActors.ActorOf( Props.Create( () => new MediWatchCommanderActor( hospitals, _dashboardActor ) ) );
+            }
+            catch ( Exception ex )
+            {
+                MessageBox.Show( $"While loading up dashboard: {ex.ToString()}", AppName, MessageBoxButtons.OK, MessageBoxIcon.Error );
+            }
+            
         }
 
         private void Dashboard_FormClosing( object sender, FormClosingEventArgs e )
@@ -70,16 +87,36 @@ namespace SurveillanceTempsReel
 
         private void LoadHospitalComboBox( IEnumerable<Hospital> hospitals )
         {
-            // TODO temp load only 1 hospital for testing
-            comboHospitals.Items.Add( hospitals.First() );
-
-            //foreach (var h in hospitals)
-            //{
-            //    comboHospitals.Items.Add( h );
-            //}
+            foreach ( var h in hospitals )
+            {
+                comboHospitals.Items.Add( h );
+            }
 
             if ( comboHospitals.Items.Count > 0 )
                 comboHospitals.SelectedIndex = 0;
+        }
+
+        private void InitPerformanceCounters( IEnumerable<Hospital> hospitals )
+        {
+            if ( PerformanceCounterCategory.Exists( PerformanceCounterHelper.MainCategory ) )
+            {
+                PerformanceCounterCategory.Delete( PerformanceCounterHelper.MainCategory );
+            }
+
+            var dc = new CounterCreationDataCollection();
+
+            foreach ( var h in hospitals )
+            {
+                dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgTimeToSeeADoctor, h.Id ),
+                    PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.NumberOfItems32 ) );
+
+                dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgAppointmentDuration, h.Id ),
+                    PerformanceCounterHelper.CounterAvgAppointmentDuration, PerformanceCounterType.NumberOfItems32 ) );
+
+                // TODO ajouter autres compteurs
+            }
+
+            PerformanceCounterCategory.Create( PerformanceCounterHelper.MainCategory, "Catégorie pour Système de surveillance médicale", PerformanceCounterCategoryType.SingleInstance, dc );
         }
 
         #endregion

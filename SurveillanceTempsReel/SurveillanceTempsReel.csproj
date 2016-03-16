@@ -70,6 +70,7 @@
   <ItemGroup>
     <Compile Include="Actors\ActorPaths.cs" />
     <Compile Include="Actors\DashboardActor.cs" />
+    <Compile Include="Actors\Helpers.cs" />
     <Compile Include="Actors\HospitalEventFetcherActor.cs" />
     <Compile Include="Actors\MediWatchCommanderActor.cs" />
     <Compile Include="Actors\StatAvgAppointmentDurationActor.cs" />
@@ -112,9 +113,7 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Helpers\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{f9e147a3-d277-4bf2-b264-ca40a398c1fa}</Project>

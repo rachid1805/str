@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Akka.Actor;
 using Common.Entities;
 
@@ -20,7 +21,7 @@ namespace SurveillanceTempsReel.Actors
 
         private readonly ICancelable _cancelPublishing;
 
-        private Random _rnd;        // TODO temp
+        private PerformanceCounter _counter;
 
         #endregion
 
@@ -30,9 +31,7 @@ namespace SurveillanceTempsReel.Actors
             _hospitalCoordinator = hospitalCoordinator;
             _subscriptions = new HashSet<IActorRef>();
             _cancelPublishing = new Cancelable( Context.System.Scheduler );
-
-            _rnd = new Random();
-
+            
             Processing();
         }
 
@@ -40,6 +39,8 @@ namespace SurveillanceTempsReel.Actors
 
         protected override void PreStart()
         {
+            _counter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), string.Empty );
+
             // cédule une tâche pour nous envoyer régulièrement un message
             // pour rafraîchir le "dashboard".
             Context.System.Scheduler.ScheduleTellRepeatedly(
@@ -56,6 +57,7 @@ namespace SurveillanceTempsReel.Actors
             try
             {
                 _cancelPublishing.Cancel( false );
+                _counter.Dispose();
             }
             catch
             {
@@ -73,8 +75,7 @@ namespace SurveillanceTempsReel.Actors
         {
             Receive<GatherStats>( bof =>
             {
-                // TODO
-                var stat = new Stat( StatisticType.AvgTimeToSeeADoctor.ToString(), (float)_rnd.NextDouble() );
+                var stat = new Stat( StatisticType.AvgTimeToSeeADoctor.ToString(), _counter.NextValue() );
                 foreach ( var sub in _subscriptions )
                     sub.Tell( stat );
             } );
