@@ -62,36 +62,45 @@ namespace PatientGenerator
                         ++generatedPatientNb;
                     }
 
-                    // Generated taken in charge patients
-                    IPatientTakenInChargeByDoctor patientTakenInCharge;
                     while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) &&
-                           ((patientTakenInCharge = generator.GeneratePatientTakenInChargeByDoctor(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds)) != null))
+                           ((generator.WaitingPatientCount > 0) || (generator.TakenInChargePatientCount > 0)))
                     {
-                        hospitalEventList.Add(new HospitalEvent
+                        // Generated taken in charge patients
+                        IPatientTakenInChargeByDoctor patientTakenInCharge;
+                        while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) &&
+                               ((patientTakenInCharge =
+                                   generator.GeneratePatientTakenInChargeByDoctor(periodOfTimeMilliSec -
+                                                                                  stopWatch.ElapsedMilliseconds)) !=
+                                null))
                         {
-                            EventId = _eventId++,
-                            PatiendId = patientTakenInCharge.PatientId,
-                            HospitalId = patientTakenInCharge.HospitalId,
-                            EventType = HospitalEventType.PatientTakenInChargeByDoctor,
-                            EventTime = patientTakenInCharge.TakenInChargeByDoctorTime,
-                            DiseaseType = patientTakenInCharge.Disease.Id,
-                            DoctorId = patientTakenInCharge.DoctorId
-                        });
-                    }
+                            hospitalEventList.Add(new HospitalEvent
+                            {
+                                EventId = _eventId++,
+                                PatiendId = patientTakenInCharge.PatientId,
+                                HospitalId = patientTakenInCharge.HospitalId,
+                                EventType = HospitalEventType.PatientTakenInChargeByDoctor,
+                                EventTime = patientTakenInCharge.TakenInChargeByDoctorTime,
+                                DiseaseType = patientTakenInCharge.Disease.Id,
+                                DoctorId = patientTakenInCharge.DoctorId
+                            });
+                        }
 
-                    // Generated leaving patients
-                    IPatientLeaving patientLeaving;
-                    while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) &&
-                           ((patientLeaving = generator.GeneratePatientLeaving(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds)) != null))
-                    {
-                        hospitalEventList.Add(new HospitalEvent
+                        // Generated leaving patients
+                        IPatientLeaving patientLeaving;
+                        while ((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) &&
+                               ((patientLeaving =
+                                   generator.GeneratePatientLeaving(periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds)) !=
+                                null))
                         {
-                            EventId = _eventId++,
-                            PatiendId = patientLeaving.PatientId,
-                            HospitalId = patientLeaving.HospitalId,
-                            EventType = HospitalEventType.PatientLeaving,
-                            EventTime = patientLeaving.LeavingTime
-                        });
+                            hospitalEventList.Add(new HospitalEvent
+                            {
+                                EventId = _eventId++,
+                                PatiendId = patientLeaving.PatientId,
+                                HospitalId = patientLeaving.HospitalId,
+                                EventType = HospitalEventType.PatientLeaving,
+                                EventTime = patientLeaving.LeavingTime
+                            });
+                        }
                     }
 
                     // Stored the new events in the database
@@ -101,7 +110,10 @@ namespace PatientGenerator
 
                     // Added a debug trace 
                     //Console.WriteLine("Generated and stored " + hospitalEventList.Count + " events in the database, elapsed time = " + stopWatch.ElapsedMilliseconds + " ms (DB Access = " + (dataBaseAccessAfter - dataBaseAccessBefore) + " ms)");
-                    s_logger.Trace("Generated and stored {0} events in the database, elapsed time = {1} ms (DB Access = {2} ms)", hospitalEventList.Count, stopWatch.ElapsedMilliseconds, (dataBaseAccessAfter - dataBaseAccessBefore));
+                    s_logger.Trace(
+                        "Generated and stored {0} events in the database, elapsed time = {1} ms (DB Access = {2} ms)",
+                        hospitalEventList.Count, stopWatch.ElapsedMilliseconds,
+                        (dataBaseAccessAfter - dataBaseAccessBefore));
 
                     // Sleep the remaining time
                     Thread.Sleep((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) ? (int) (periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds) : 0);
