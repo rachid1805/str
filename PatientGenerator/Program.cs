@@ -12,6 +12,7 @@ namespace PatientGenerator
     {
         private static readonly NLog.Logger s_logger = NLog.LogManager.GetCurrentClassLogger();
         private static readonly AutoResetEvent _insertEvent = new AutoResetEvent(false);
+        private static readonly AutoResetEvent _syncEvent = new AutoResetEvent(true);
         private enum ListType { FirstList = 0, SecondList };
         private static ListType _listToInsertInDataBase = ListType.FirstList;
         private static ListType _listToPopulateWithEvents = ListType.SecondList;
@@ -122,13 +123,14 @@ namespace PatientGenerator
                     }
 
                     // Raised the insert event allowing the data base thread to proceed
+                    _syncEvent.WaitOne();
                     _listToInsertInDataBase = (_listToPopulateWithEvents == ListType.FirstList) ? ListType.FirstList : ListType.SecondList;
                     _elapsedTimeDictionary[_listToInsertInDataBase] = stopWatch.ElapsedMilliseconds;
                     _insertEvent.Set();
 
                     // Sleep the remaining time
                     Thread.Sleep((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) ? (int) (periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds) : 0);
-                    //Console.WriteLine("Elapsed Time = " + stopWatch.ElapsedMilliseconds + " ms");
+                    Console.WriteLine("Elapsed Time = " + stopWatch.ElapsedMilliseconds + " ms");
                     stopWatch.Stop();
                 }
             }
@@ -158,6 +160,7 @@ namespace PatientGenerator
                     hospitalEventList.Count, _elapsedTimeDictionary[_listToInsertInDataBase],
                     stopWatch.ElapsedMilliseconds);
                 hospitalEventList.Clear();
+                _syncEvent.Set();
                 stopWatch.Stop();
             }
         }
