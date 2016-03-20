@@ -23,6 +23,12 @@ namespace SurveillanceTempsReel.Actors
 
         private PerformanceCounter _counter;
 
+        private Dictionary<int, DateTime> _patients;
+
+        private double _avgMinutesToSeeADoctor;
+
+        private int _statCount;
+
         #endregion
 
         public StatAvgTimeToSeeADoctorActor( Hospital hospital, IActorRef hospitalCoordinator )
@@ -40,6 +46,9 @@ namespace SurveillanceTempsReel.Actors
         protected override void PreStart()
         {
             _counter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), string.Empty );
+            _patients = new Dictionary<int, DateTime>();
+            _avgMinutesToSeeADoctor = 0.0d;
+            _statCount = 0;
 
             // cédule une tâche pour nous envoyer régulièrement un message
             // pour rafraîchir le "dashboard".
@@ -75,7 +84,9 @@ namespace SurveillanceTempsReel.Actors
         {
             Receive<GatherStats>( bof =>
             {
-                var stat = new Stat( StatisticType.AvgTimeToSeeADoctor.ToString(), _counter.NextValue() );
+                //var stat = new Stat( StatisticType.AvgTimeToSeeADoctor.ToString(), _counter.NextValue() );
+                var stat = new Stat(StatisticType.AvgTimeToSeeADoctor.ToString(), _avgMinutesToSeeADoctor);
+
                 foreach ( var sub in _subscriptions )
                     sub.Tell( stat );
             } );
@@ -90,7 +101,22 @@ namespace SurveillanceTempsReel.Actors
                 _subscriptions.Remove( uc.Subscriber );
             } );
 
-            // TODO : create and handle message that contains new data to process
+            Receive<RegisterPatient>( rp =>   
+            {
+                _patients.Add( rp.PatientId, rp.ArrivalTime );
+            } );
+
+            Receive<BeginAppointmentWithDoctor>(bawd =>
+            {
+                DateTime arrivalTime;
+                if ( _patients.TryGetValue( bawd.PatientId, out arrivalTime ) )
+                {
+                    var waitingMinutes = ( bawd.StartTime - arrivalTime ).TotalMinutes;
+                    _avgMinutesToSeeADoctor = (_avgMinutesToSeeADoctor + waitingMinutes) / ++_statCount;
+
+                    _patients.Remove( bawd.PatientId );
+                }
+            } );
         }
     }
 }

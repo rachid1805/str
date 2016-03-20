@@ -11,7 +11,7 @@ namespace Common.Helpers
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private const string ConnectionString = "Data Source=127.0.0.1;Initial Catalog=MedWatch;Integrated Security=True";
+        public static readonly string ConnectionString = @"Server=127.0.0.1\MSSQLSERVER2012;Database=MedWatch;Trusted_Connection=True;";
 
         public static void InsertBulkHospitalEvents(IEnumerable<IHospitalEvent> events)
         {
@@ -138,7 +138,7 @@ namespace Common.Helpers
             }
         }
 
-        public static IEnumerable<IHospitalEvent> FindHospitalEventsAfter( int hospitalId, int afterEventId )
+        public static IEnumerable<IHospitalEvent> FindHospitalEventsAfter( int hospitalId, int afterEventId, int maxEventCount )
         {
             logger.Trace( "FindHospitalEventsAfter called" );
             var sw = Stopwatch.StartNew();
@@ -166,6 +166,12 @@ namespace Common.Helpers
                         param.Value = afterEventId;
                         param.SqlDbType = System.Data.SqlDbType.Int;
                         cmd.Parameters.Add( param );
+
+                        param = new SqlParameter();
+                        param.ParameterName = "@MaxEventCount";
+                        param.Value = maxEventCount;
+                        param.SqlDbType = System.Data.SqlDbType.Int;
+                        cmd.Parameters.Add(param);
 
                         SqlDataReader dr = cmd.ExecuteReader();
 

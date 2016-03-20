@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Akka.Actor;
+using Common.Entities;
 
 namespace SurveillanceTempsReel.Actors
 {
@@ -25,9 +24,9 @@ namespace SurveillanceTempsReel.Actors
     {
         public string Series { get; private set; }
 
-        public float CounterValue { get; private set; }
+        public double CounterValue { get; private set; }
 
-        public Stat( string series, float counterValue )
+        public Stat( string series, double counterValue )
         {
             CounterValue = counterValue;
             Series = series;
@@ -99,6 +98,60 @@ namespace SurveillanceTempsReel.Actors
         public UnsubscribeEventFetcher( IActorRef subscriber )
         {
             Subscriber = subscriber;
+        }
+    }
+
+    public class HospitalEvent { }
+
+    /// <summary>
+    /// Arrivée d'un patient à l'hôpital.
+    /// </summary>
+    public class RegisterPatient : HospitalEvent
+    {
+        public int HospitalId { get; private set; }
+        public int PatientId { get; private set; }
+        public DateTime ArrivalTime { get; private set; }
+        public Disease Disease { get; private set; }
+
+        public RegisterPatient( int hospitalId, int patientId, DateTime arrivalTime, Disease disease )
+        {
+            HospitalId = hospitalId;
+            PatientId = patientId;
+            ArrivalTime = arrivalTime;
+            Disease = disease;
+        }
+    }
+
+    /// <summary>
+    /// Départ d'un patient de l'hôpital
+    /// </summary>
+    public class UnregisterPatient : HospitalEvent
+    {
+        public int HospitalId { get; private set; }
+        public int PatientId { get; private set; }
+        public DateTime LeavingTime { get; private set; }
+
+        public UnregisterPatient(int hospitalid, int patientId, DateTime leavingTime)
+        {
+            HospitalId = hospitalid;
+            PatientId = patientId;
+            LeavingTime = leavingTime;
+        }
+    }
+
+    public class BeginAppointmentWithDoctor : HospitalEvent
+    {
+        public int HospitalId { get; private set; }
+        public int PatientId { get; private set; }
+        public int DoctorId { get; private set; }
+        public DateTime StartTime { get; private set; }
+
+        public BeginAppointmentWithDoctor( int hospitalId, int patientId, int doctorId, DateTime startTime)
+        {
+            HospitalId = hospitalId;
+            PatientId = patientId;
+            DoctorId = doctorId;
+            StartTime = startTime;
         }
     }
 

@@ -5,6 +5,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 using Akka.Actor;
 using Akka.Routing;
 using Common.Entities;
+using Common.Helpers;
 
 namespace SurveillanceTempsReel.Actors
 {
@@ -22,6 +23,7 @@ namespace SurveillanceTempsReel.Actors
         private readonly IActorRef _dashboardActor;
 
         private IActorRef _coordinatorActor;
+        private IActorRef _eventFetcherActor;
 
         #endregion
 
@@ -72,6 +74,10 @@ namespace SurveillanceTempsReel.Actors
             _coordinatorActor = Context.ActorOf( Props.Empty.WithRouter( new BroadcastGroup(
                ActorPaths.GetActorPath( ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id ),
                ActorPaths.GetActorPath( ActorType.StatAvgAppointmentDurationActor, _hospital.Id ) ) ) );
+
+            // crée une acteur pour obtenir les événements de la BD et les propager dans le système d'acteurs.
+            _eventFetcherActor = Context.ActorOf( Props.Create( () => new HospitalEventFetcherActor( _hospital, MedWatchDAL.ConnectionString ) ) );
+            _eventFetcherActor.Tell( new SubscribeEventFetcher( _coordinatorActor ));
 
             base.PreStart();
         }

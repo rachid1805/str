@@ -53,7 +53,7 @@ namespace SurveillanceTempsReel
                 _dashboardActor.Tell( new DashboardActor.InitializeStatChart( null ) );
 
                 // initialization du commander
-                _commanderActor = Program.MediWatchActors.ActorOf( Props.Create( () => new MediWatchCommanderActor( hospitals, _dashboardActor ) ) );
+                _commanderActor = Program.MediWatchActors.ActorOf( Props.Create( () => new MediWatchCommanderActor( htemp, _dashboardActor ) ) );
             }
             catch ( Exception ex )
             {
