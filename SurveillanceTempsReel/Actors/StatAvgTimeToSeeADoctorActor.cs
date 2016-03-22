@@ -22,12 +22,13 @@ namespace SurveillanceTempsReel.Actors
         private readonly ICancelable _cancelPublishing;
 
         private PerformanceCounter _counter;
+        private PerformanceCounter _baseCounter;
 
         private Dictionary<int, DateTime> _patients;
 
-        private double _avgMinutesToSeeADoctor;
+        //private double _avgMinutesToSeeADoctor;
 
-        private int _statCount;
+        //private int _statCount;
 
         #endregion
 
@@ -45,28 +46,34 @@ namespace SurveillanceTempsReel.Actors
 
         protected override void PreStart()
         {
-            _counter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), string.Empty );
+            _counter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), false );
+            _baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), false );
+            _counter.RawValue = 0;
+            _baseCounter.RawValue = 0;
+
             _patients = new Dictionary<int, DateTime>();
-            _avgMinutesToSeeADoctor = 0.0d;
-            _statCount = 0;
+            
+            //_avgMinutesToSeeADoctor = 0.0d;
+            //_statCount = 0;
 
             // cédule une tâche pour nous envoyer régulièrement un message
             // pour rafraîchir le "dashboard".
-            Context.System.Scheduler.ScheduleTellRepeatedly(
-                TimeSpan.FromMilliseconds( 250 ),           // TODO tweak numbers
-                TimeSpan.FromMilliseconds( 250 ),
-                Self,
-                new GatherStats(),
-                Self,
-                _cancelPublishing );
+            //Context.System.Scheduler.ScheduleTellRepeatedly(
+            //    TimeSpan.FromMilliseconds( 250 ),           // TODO tweak numbers
+            //    TimeSpan.FromMilliseconds( 250 ),
+            //    Self,
+            //    new GatherStats(),
+            //    Self,
+            //    _cancelPublishing );
         }
 
         protected override void PostStop()
         {
             try
             {
-                _cancelPublishing.Cancel( false );
+                _cancelPublishing.Cancel( false ); 
                 _counter.Dispose();
+                _baseCounter.Dispose();
             }
             catch
             {
@@ -84,8 +91,8 @@ namespace SurveillanceTempsReel.Actors
         {
             Receive<GatherStats>( bof =>
             {
-                //var stat = new Stat( StatisticType.AvgTimeToSeeADoctor.ToString(), _counter.NextValue() );
-                var stat = new Stat(StatisticType.AvgTimeToSeeADoctor.ToString(), _avgMinutesToSeeADoctor);
+                var stat = new Stat( StatisticType.AvgTimeToSeeADoctor.ToString(), _counter.NextValue() );
+                //var stat = new Stat(StatisticType.AvgTimeToSeeADoctor.ToString(), _avgMinutesToSeeADoctor);
 
                 foreach ( var sub in _subscriptions )
                     sub.Tell( stat );
@@ -111,8 +118,11 @@ namespace SurveillanceTempsReel.Actors
                 DateTime arrivalTime;
                 if ( _patients.TryGetValue( bawd.PatientId, out arrivalTime ) )
                 {
-                    var waitingMinutes = ( bawd.StartTime - arrivalTime ).TotalMinutes;
-                    _avgMinutesToSeeADoctor = (_avgMinutesToSeeADoctor + waitingMinutes) / ++_statCount;
+                    //var waitingMinutes = ( bawd.StartTime - arrivalTime ).TotalMinutes;
+                    //_avgMinutesToSeeADoctor = (_avgMinutesToSeeADoctor + waitingMinutes) / ++_statCount;
+
+                    _counter.IncrementBy( ( bawd.StartTime - arrivalTime ).Ticks );
+                    _baseCounter.Increment();
 
                     _patients.Remove( bawd.PatientId );
                 }

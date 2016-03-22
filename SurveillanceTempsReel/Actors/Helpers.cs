@@ -35,5 +35,28 @@ namespace SurveillanceTempsReel.Actors
 
             return name;
         }
+
+        public static string GetPerformanceBaseCounterName(StatisticType statType, int hospitalId)
+        {
+            string name;
+
+            switch (statType)
+            {
+                case StatisticType.AvgTimeToSeeADoctor:
+                    name = $"(H{hospitalId}) {CounterAvgTimeToSeeADoctor} (BASE)";
+                    break;
+
+                case StatisticType.AvgAppointmentDuration:
+                    name = $"(H{hospitalId}) {CounterAvgAppointmentDuration} (BASE)";
+                    break;
+
+                // TODO ajouter autres compteurs
+
+                default:
+                    throw new ArgumentOutOfRangeException("statType");
+            }
+
+            return name;
+        }
     }
 }

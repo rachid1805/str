@@ -59,12 +59,12 @@ namespace SurveillanceTempsReel.Actors
             }
 
             // stat 2
-            {
-                var actorStat2 = Context.ActorOf( Props.Create( () => new StatAvgAppointmentDurationActor( _hospital, Self ) ), ActorPaths.StatAvgAppointmentDurationActorName );
-                _hospitalStatActors[ StatisticType.AvgAppointmentDuration ] = actorStat2;
+            //{
+            //    var actorStat2 = Context.ActorOf( Props.Create( () => new StatAvgAppointmentDurationActor( _hospital, Self ) ), ActorPaths.StatAvgAppointmentDurationActorName );
+            //    _hospitalStatActors[ StatisticType.AvgAppointmentDuration ] = actorStat2;
 
-                _hospitalStatActors[ StatisticType.AvgAppointmentDuration ].Tell( new SubscribeStatistic( StatisticType.AvgAppointmentDuration, _dashboardActor ) );
-            }
+            //    _hospitalStatActors[ StatisticType.AvgAppointmentDuration ].Tell( new SubscribeStatistic( StatisticType.AvgAppointmentDuration, _dashboardActor ) );
+            //}
 
             // stat 3
             // TODO
@@ -72,8 +72,7 @@ namespace SurveillanceTempsReel.Actors
             // crée un routeur pour broadcaster les messages vers les acteurs de statistiques
             // TODO ajouter les paths des autres acteurs de stats 
             _coordinatorActor = Context.ActorOf( Props.Empty.WithRouter( new BroadcastGroup(
-               ActorPaths.GetActorPath( ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id ),
-               ActorPaths.GetActorPath( ActorType.StatAvgAppointmentDurationActor, _hospital.Id ) ) ) );
+               ActorPaths.GetActorPath( ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id ) ) ) );
 
             // crée une acteur pour obtenir les événements de la BD et les propager dans le système d'acteurs.
             _eventFetcherActor = Context.ActorOf( Props.Create( () => new HospitalEventFetcherActor( _hospital, MedWatchDAL.ConnectionString ) ) );

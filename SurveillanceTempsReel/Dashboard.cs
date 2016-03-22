@@ -108,14 +108,19 @@ namespace SurveillanceTempsReel
             foreach ( var h in hospitals )
             {
                 dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgTimeToSeeADoctor, h.Id ),
-                    PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.NumberOfItems32 ) );
+                    PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.AverageTimer32 ) );
 
-                dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgAppointmentDuration, h.Id ),
-                    PerformanceCounterHelper.CounterAvgAppointmentDuration, PerformanceCounterType.NumberOfItems32 ) );
+                dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.AvgTimeToSeeADoctor, h.Id),
+                    PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.AverageBase));
 
                 // TODO ajouter autres compteurs
+
+                //dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgAppointmentDuration, h.Id ),
+                //    PerformanceCounterHelper.CounterAvgAppointmentDuration, PerformanceCounterType.AverageTimer32 ) );
+
             }
 
+            // TODO il faut une categorie pour chaque calcul! (compteurs par calcul (categorie))
             PerformanceCounterCategory.Create( PerformanceCounterHelper.MainCategory, "Catégorie pour Système de surveillance médicale", PerformanceCounterCategoryType.SingleInstance, dc );
         }
 
