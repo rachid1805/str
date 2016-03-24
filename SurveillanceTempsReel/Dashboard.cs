@@ -113,6 +113,12 @@ namespace SurveillanceTempsReel
                 dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.AvgTimeToSeeADoctor, h.Id),
                     PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.AverageBase));
 
+                dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceCounterName(StatisticType.Illness, h.Id),
+                    PerformanceCounterHelper.CounterPerDisease, PerformanceCounterType.RawFraction));
+
+                dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.Illness, h.Id),
+                    PerformanceCounterHelper.CounterPerDisease, PerformanceCounterType.RawBase));
+
                 // TODO ajouter autres compteurs
 
                 //dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgAppointmentDuration, h.Id ),

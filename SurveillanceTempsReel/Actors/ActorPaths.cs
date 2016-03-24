@@ -13,6 +13,7 @@ namespace SurveillanceTempsReel.Actors
         Coordinator,
         StatAvgTimeToSeeADoctorActor,
         StatAvgAppointmentDurationActor,
+        StatDiseaseActor
     }
 
     public static class ActorPaths
@@ -22,6 +23,7 @@ namespace SurveillanceTempsReel.Actors
         public static readonly string HospitalCoordinatorActorName = "coordinator";
         public static readonly string StatAvgTimeToSeeADoctorActorName = "stat1";
         public static readonly string StatAvgAppointmentDurationActorName = "stat2";
+        public static readonly string StatDiseaseActorName = "stat3";
 
         public static readonly string MediWatchActorSystemName = "MediWatchActors";
 
@@ -54,6 +56,11 @@ namespace SurveillanceTempsReel.Actors
                 case ActorType.StatAvgAppointmentDurationActor:
                     if ( hospitalId <= 0 ) throw new ArgumentOutOfRangeException( "hospitalId" );
                     path = $"{PathPrefix}/user/{MediWatchCommanderActorName}/{GetActorCoordinatorName( hospitalId )}/{StatAvgAppointmentDurationActorName}";
+                    break;
+
+                case ActorType.StatDiseaseActor:
+                    if (hospitalId <= 0) throw new ArgumentOutOfRangeException("hospitalId");
+                    path = $"{PathPrefix}/user/{MediWatchCommanderActorName}/{GetActorCoordinatorName(hospitalId)}/{StatDiseaseActorName}";
                     break;
 
                 default:

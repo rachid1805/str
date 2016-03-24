@@ -77,6 +77,7 @@
     <Compile Include="Actors\StatAvgTimeToSeeADoctorActor.cs" />
     <Compile Include="Actors\HospitalCoordinatorActor.cs" />
     <Compile Include="Actors\Protocol.cs" />
+    <Compile Include="Actors\StatDiseaseActor.cs" />
     <Compile Include="Dashboard.cs">
       <SubType>Form</SubType>
     </Compile>

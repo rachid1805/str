@@ -11,6 +11,8 @@ namespace SurveillanceTempsReel.Actors
 
         public static readonly string CounterAvgAppointmentDuration = "Temps moyen d'un rendez-vous";
 
+        public static readonly string CounterPerDisease = "Pourcentage de chaque maladie";
+
         // TODO ajouter autres compteurs
 
         public static string GetPerformanceCounterName( StatisticType statType, int hospitalId )
@@ -25,6 +27,10 @@ namespace SurveillanceTempsReel.Actors
 
                 case StatisticType.AvgAppointmentDuration:
                     name = $"(H{hospitalId}) {CounterAvgAppointmentDuration}";
+                    break;
+
+                case StatisticType.Illness:
+                    name = $"(H{hospitalId}) {CounterPerDisease}";
                     break;
 
                 // TODO ajouter autres compteurs
@@ -48,6 +54,10 @@ namespace SurveillanceTempsReel.Actors
 
                 case StatisticType.AvgAppointmentDuration:
                     name = $"(H{hospitalId}) {CounterAvgAppointmentDuration} (BASE)";
+                    break;
+
+                case StatisticType.Illness:
+                    name = $"(H{hospitalId}) {CounterPerDisease} (BASE)";
                     break;
 
                 // TODO ajouter autres compteurs

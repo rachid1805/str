@@ -11,7 +11,7 @@ namespace Common.Helpers
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public static readonly string ConnectionString = @"Server=127.0.0.1\MSSQLSERVER2012;Database=MedWatch;Trusted_Connection=True;";
+        public static readonly string ConnectionString = @"Server=127.0.0.1;Database=MedWatch;Trusted_Connection=True;";
 
         public static void InsertBulkHospitalEvents(IEnumerable<IHospitalEvent> events)
         {

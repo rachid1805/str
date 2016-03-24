@@ -130,7 +130,7 @@ namespace PatientGenerator
 
                     // Sleep the remaining time
                     Thread.Sleep((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) ? (int) (periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds) : 0);
-                    Console.WriteLine("Elapsed Time = " + stopWatch.ElapsedMilliseconds + " ms");
+                    //Console.WriteLine("Elapsed Time = " + stopWatch.ElapsedMilliseconds + " ms");
                     stopWatch.Stop();
                 }
             }

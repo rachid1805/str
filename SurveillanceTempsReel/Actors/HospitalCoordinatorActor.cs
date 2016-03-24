@@ -67,12 +67,26 @@ namespace SurveillanceTempsReel.Actors
             //}
 
             // stat 3
-            // TODO
+            {
+                var actorStat3 = Context.ActorOf(Props.Create(() => new StatDiseaseActor(_hospital, Self)), ActorPaths.StatDiseaseActorName);
+                _hospitalStatActors[StatisticType.Illness] = actorStat3;
+
+                // TODO JS : 
+                // - Create message e.g. "SelectHospitalForChart"
+                // - When rightful coordinator receive msg, send messages to dashboard actor to initialize, then register series
+                // - Stat actors that are for selected hospital must stop sending to dashboard actor, but continue updating perf. counters
+                //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart() );
+                _dashboardActor.Tell(new DashboardActor.AddSeriesToStatChart(new Series(StatisticType.Illness.ToString()) { ChartType = SeriesChartType.FastLine, Color = Color.Aqua }));
+
+                // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
+                _hospitalStatActors[StatisticType.Illness].Tell(new SubscribeStatistic(StatisticType.Illness, _dashboardActor));
+            }
 
             // crée un routeur pour broadcaster les messages vers les acteurs de statistiques
             // TODO ajouter les paths des autres acteurs de stats 
             _coordinatorActor = Context.ActorOf( Props.Empty.WithRouter( new BroadcastGroup(
-               ActorPaths.GetActorPath( ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id ) ) ) );
+               ActorPaths.GetActorPath( ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id ),
+               ActorPaths.GetActorPath(ActorType.StatDiseaseActor, _hospital.Id)) ) );
 
             // crée une acteur pour obtenir les événements de la BD et les propager dans le système d'acteurs.
             _eventFetcherActor = Context.ActorOf( Props.Create( () => new HospitalEventFetcherActor( _hospital, MedWatchDAL.ConnectionString ) ) );
