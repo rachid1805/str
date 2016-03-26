@@ -101,38 +101,55 @@ namespace SurveillanceTempsReel.Actors
             Receive<RegisterPatient>( rp =>   
             {
                 _patients[rp.Disease.Priority].Add( rp.PatientId, rp );
-                var patientsNumber = _patients.Sum(patient => patient.Value.Count);
-                var estimatedWaitingTime = new List<long>(patientsNumber);
 
-                if (_doctors.Count > 0)
+                if (_doctors.Count == 0)
                 {
-                    // Trouver le temps le plus court qui reste pour qu'un médecin se libère
-                    var remainingTime = long.MaxValue;
-                    foreach (var doctor in _doctors)
+                    // Aucun docteur n'est encore enregistré, le temsp d'attente est indéfini
+                    return;
+                }
+
+                // Trier le temps d'occupation de tous les médecins
+                var remainingTimeDoctor = new List<long>(_doctors.Count);
+                for (var index = 0; index < _doctors.Count; ++index)
+                {
+                    var patient = _doctors[index];
+                    if (patient == null)
                     {
-                        if (doctor.Value == null)
-                        {
-                            remainingTime = 0;
-                            break;
-                        }
-                        var diseaseInCharge = doctor.Value.Disease;
+                        // Médecin sans patient
+                        remainingTimeDoctor[index] = 0;
+                    }
+                    else
+                    {
+                        var diseaseInCharge = patient.Disease;
                         var requiredTimeForDisease = ConvertTimeToTicks(diseaseInCharge.RequiredTime, diseaseInCharge.TimeUnit);
-                        var elapsedTime = (DateTime.Now - doctor.Value.StartTime).Ticks;
+                        var elapsedTime = (DateTime.Now - patient.StartTime).Ticks;
                         if (elapsedTime > requiredTimeForDisease)
                         {
-                            remainingTime = 0;
-                            break;
+                            // Le médecin a terminé avec ce patient
+                            remainingTimeDoctor[index] = 0;
                         }
-                        if (remainingTime > (requiredTimeForDisease - elapsedTime))
+                        else
                         {
-                            remainingTime = requiredTimeForDisease - elapsedTime;
+                            // Le temps qui reste au médecin avant de se libérer
+                            remainingTimeDoctor[index] = requiredTimeForDisease - elapsedTime;
                         }
                     }
+                }
 
-                    // Calculer le temps estimé pour voir un médecin
-                    if (remainingTime != long.MaxValue)
+                // Estimer le temps d'attente de chaque patient
+                for (var diseasePriority = DiseasePriority.VeryHigh; diseasePriority < DiseasePriority.Invalid; ++diseasePriority)
+                {
+                    foreach (var patient in _patients[diseasePriority])
                     {
-                        
+                        // Trier la liste de temps d'ocuppation des médecins
+                        remainingTimeDoctor.Sort();
+
+                        // Le premier médecin qui va se libérer
+                        _counter.IncrementBy(remainingTimeDoctor[0]);
+                        _baseCounter.Increment();
+
+                        // Rajouter à ce médecin le temps d'occupation avec ce nouveau patient
+                        remainingTimeDoctor[0] += ConvertTimeToTicks(patient.Value.Disease.RequiredTime, patient.Value.Disease.TimeUnit);
                     }
                 }
             } );
