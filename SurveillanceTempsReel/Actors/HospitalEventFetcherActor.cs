@@ -142,7 +142,7 @@ namespace SurveillanceTempsReel.Actors
                     break;
 
                 case HospitalEventType.PatientTakenInChargeByDoctor:
-                    hospitalEvent = new BeginAppointmentWithDoctor(dbEvent.HospitalId, dbEvent.PatiendId, dbEvent.DoctorId.Value, dbEvent.EventTime);
+                    hospitalEvent = new BeginAppointmentWithDoctor(dbEvent.HospitalId, dbEvent.PatiendId, dbEvent.DoctorId.Value, dbEvent.EventTime, _diseases[dbEvent.DiseaseType.Value]);
                     break;
 
                 default:

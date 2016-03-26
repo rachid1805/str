@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Akka.Actor;
 using Common.Entities;
 
@@ -14,6 +13,7 @@ namespace SurveillanceTempsReel.Actors
         AvgTimeToSeeADoctor,
         AvgAppointmentDuration,
         Illness,
+        EstimatedTimeToSeeADoctor
     }
 
     #region Message types
@@ -145,13 +145,15 @@ namespace SurveillanceTempsReel.Actors
         public int PatientId { get; private set; }
         public int DoctorId { get; private set; }
         public DateTime StartTime { get; private set; }
+        public Disease Disease { get; private set; }
 
-        public BeginAppointmentWithDoctor( int hospitalId, int patientId, int doctorId, DateTime startTime)
+        public BeginAppointmentWithDoctor( int hospitalId, int patientId, int doctorId, DateTime startTime, Disease disease)
         {
             HospitalId = hospitalId;
             PatientId = patientId;
             DoctorId = doctorId;
             StartTime = startTime;
+            Disease = disease;
         }
     }
 

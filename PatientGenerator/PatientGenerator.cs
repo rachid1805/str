@@ -213,7 +213,7 @@ namespace PatientGenerator
 
         #region Private
 
-        private int ConvertElapsedTimeFromMsTo(int timeMilliSec, RequiredTimeUnit timeUnit)
+        private static int ConvertElapsedTimeFromMsTo(int timeMilliSec, RequiredTimeUnit timeUnit)
         {
             int convertedTime;
 

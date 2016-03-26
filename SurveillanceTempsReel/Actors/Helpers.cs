@@ -13,7 +13,7 @@ namespace SurveillanceTempsReel.Actors
 
         public static readonly string CounterPerDisease = "Pourcentage de chaque maladie";
 
-        // TODO ajouter autres compteurs
+        public static readonly string CounterEstimatedTimeToSeeADoctor = "Temps moyen estimé pour voir un médecin";
 
         public static string GetPerformanceCounterName( StatisticType statType, int hospitalId )
         {
@@ -33,7 +33,9 @@ namespace SurveillanceTempsReel.Actors
                     name = $"(H{hospitalId}) {CounterPerDisease}";
                     break;
 
-                // TODO ajouter autres compteurs
+                case StatisticType.EstimatedTimeToSeeADoctor:
+                    name = $"(H{hospitalId}) {CounterEstimatedTimeToSeeADoctor}";
+                    break;
 
                 default:
                     throw new ArgumentOutOfRangeException( "statType" );
@@ -60,7 +62,9 @@ namespace SurveillanceTempsReel.Actors
                     name = $"(H{hospitalId}) {CounterPerDisease} (BASE)";
                     break;
 
-                // TODO ajouter autres compteurs
+                case StatisticType.EstimatedTimeToSeeADoctor:
+                    name = $"(H{hospitalId}) {CounterEstimatedTimeToSeeADoctor} (BASE)";
+                    break;
 
                 default:
                     throw new ArgumentOutOfRangeException("statType");
