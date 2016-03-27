@@ -11,6 +11,7 @@ namespace SurveillanceTempsReel.Actors
         Dashboard,
         Commander,
         Coordinator,
+        Fetcher,
         StatAvgTimeToSeeADoctorActor,
         StatAvgAppointmentDurationActor,
         StatDiseaseActor,
@@ -22,6 +23,7 @@ namespace SurveillanceTempsReel.Actors
         public static readonly string DashboardActorName = "dashboard";
         public static readonly string MediWatchCommanderActorName = "commander";
         public static readonly string HospitalCoordinatorActorName = "coordinator";
+        public static readonly string HospitalEventFetcherActorName = "fetcher";
         public static readonly string StatAvgTimeToSeeADoctorActorName = "stat1";
         public static readonly string StatAvgAppointmentDurationActorName = "stat2";
         public static readonly string StatDiseaseActorName = "stat3";
@@ -48,6 +50,11 @@ namespace SurveillanceTempsReel.Actors
                 case ActorType.Coordinator:
                     if ( hospitalId <= 0 ) throw new ArgumentOutOfRangeException( "hospitalId" );
                     path = $"{PathPrefix}/user/{MediWatchCommanderActorName}/{GetActorCoordinatorName( hospitalId )}";
+                    break;
+
+                case ActorType.Fetcher:
+                    if (hospitalId <= 0) throw new ArgumentOutOfRangeException("hospitalId");
+                    path = $"{PathPrefix}/user/{MediWatchCommanderActorName}/{GetActorCoordinatorName(hospitalId)}/{HospitalEventFetcherActorName}";
                     break;
 
                 case ActorType.StatAvgTimeToSeeADoctorActor:
