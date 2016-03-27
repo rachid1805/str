@@ -28,7 +28,7 @@ namespace Common.Helpers
                     {
                         // Create the data table
                         DataTable table = new DataTable();
-                        table.Columns.Add( "Id", typeof( int ) );
+                        table.Columns.Add( "Id", typeof( long ) );
                         table.Columns.Add( "HospitalId", typeof( int ) );
                         table.Columns.Add( "PatientId", typeof( int ) );
                         table.Columns.Add( "EventType", typeof( short ) );
@@ -138,7 +138,7 @@ namespace Common.Helpers
             }
         }
 
-        public static IEnumerable<IHospitalEvent> FindHospitalEventsAfter( int hospitalId, int afterEventId, int maxEventCount )
+        public static IEnumerable<IHospitalEvent> FindHospitalEventsAfter( int hospitalId, long afterEventId, int maxEventCount )
         {
             logger.Trace( "FindHospitalEventsAfter called" );
             var sw = Stopwatch.StartNew();
@@ -164,7 +164,7 @@ namespace Common.Helpers
                         param = new SqlParameter();
                         param.ParameterName = "@AfterEventId";
                         param.Value = afterEventId;
-                        param.SqlDbType = System.Data.SqlDbType.Int;
+                        param.SqlDbType = System.Data.SqlDbType.BigInt;
                         cmd.Parameters.Add( param );
 
                         param = new SqlParameter();
@@ -179,7 +179,7 @@ namespace Common.Helpers
                         {
                             var e = new HospitalEvent
                             {
-                                EventId = dr.GetInt32( 0 ),
+                                EventId = dr.GetInt64( 0 ),
                                 HospitalId = hospitalId,
                                 PatiendId = dr.GetInt32( 1 ),
                                 EventType = (HospitalEventType) dr.GetInt16( 2 ),

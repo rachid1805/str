@@ -42,7 +42,7 @@ namespace PatientGenerator
             var thread = new Thread(InsertEventsInDataBaseHandle);
             thread.Start();
 
-            var _eventId = 0;
+            long _eventId = 0;
 
             try
             {

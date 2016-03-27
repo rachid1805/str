@@ -8,7 +8,7 @@ namespace Common.Entities
 {
     public interface IHospitalEvent
     {
-        int EventId { get; }
+        long EventId { get; }
         int HospitalId { get; }
         int PatiendId { get; }
         HospitalEventType EventType { get; }
@@ -50,7 +50,7 @@ namespace Common.Entities
 
     public class HospitalEvent : IHospitalEvent
     {
-        public int EventId { get; set; }
+        public long EventId { get; set; }
         public int HospitalId { get; set; }
         public int PatiendId { get; set; }
         public HospitalEventType EventType { get; set; }
