@@ -12,8 +12,6 @@ namespace SurveillanceTempsReel.Actors
 
         private readonly Hospital _hospital;
         
-        private readonly IActorRef _hospitalCoordinator;
-
         private readonly HashSet<IActorRef> _subscriptions;
 
         private readonly ICancelable _cancelPublishing;
@@ -22,10 +20,9 @@ namespace SurveillanceTempsReel.Actors
 
         #endregion
 
-        public StatAvgAppointmentDurationActor( Hospital hospital, IActorRef hospitalCoordinator )
+        public StatAvgAppointmentDurationActor( Hospital hospital )
         {
             _hospital = hospital;
-            _hospitalCoordinator = hospitalCoordinator;
             _subscriptions = new HashSet<IActorRef>();
             _cancelPublishing = new Cancelable( Context.System.Scheduler );
         }
@@ -38,13 +35,13 @@ namespace SurveillanceTempsReel.Actors
 
             // cédule une tâche pour nous envoyer régulièrement un message
             // pour rafraîchir le "dashboard".
-            Context.System.Scheduler.ScheduleTellRepeatedly(
-                TimeSpan.FromMilliseconds( 250 ),           // TODO tweak numbers
-                TimeSpan.FromMilliseconds( 250 ),
-                Self,
-                new GatherStats(),
-                Self,
-                _cancelPublishing );
+            //Context.System.Scheduler.ScheduleTellRepeatedly(
+            //    TimeSpan.FromMilliseconds( 250 ),           // TODO tweak numbers
+            //    TimeSpan.FromMilliseconds( 250 ),
+            //    Self,
+            //    new GatherStats(),
+            //    Self,
+            //    _cancelPublishing );
         }
 
         protected override void PostStop()

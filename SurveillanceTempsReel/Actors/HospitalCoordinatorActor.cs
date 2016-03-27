@@ -44,15 +44,14 @@ namespace SurveillanceTempsReel.Actors
 
             // stat 1
             {
-                var actorStat1 = Context.ActorOf( Props.Create( () => new StatAvgTimeToSeeADoctorActor( _hospital, Self ) ), ActorPaths.StatAvgTimeToSeeADoctorActorName );
+                var actorStat1 = Context.ActorOf( Props.Create( () => new StatAvgTimeToSeeADoctorActor( _hospital ) ), ActorPaths.StatAvgTimeToSeeADoctorActorName );
                 _hospitalStatActors[ StatisticType.AvgTimeToSeeADoctor ] = actorStat1;
 
                 // TODO JS : 
                 // - Create message e.g. "SelectHospitalForChart"
                 // - When rightful coordinator receive msg, send messages to dashboard actor to initialize, then register series
                 // - Stat actors that are for selected hospital must stop sending to dashboard actor, but continue updating perf. counters
-                //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart() );
-                _dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart( new Series( StatisticType.AvgTimeToSeeADoctor.ToString() ) { ChartType = SeriesChartType.FastLine, Color = Color.DarkGreen } ) );
+                //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart( new Series( StatisticType.AvgTimeToSeeADoctor.ToString() ) { ChartType = SeriesChartType.FastLine, Color = Color.DarkGreen } ) );
 
                 // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
                 _hospitalStatActors[ StatisticType.AvgTimeToSeeADoctor ].Tell( new SubscribeStatistic( StatisticType.AvgTimeToSeeADoctor, _dashboardActor ) );
@@ -60,7 +59,7 @@ namespace SurveillanceTempsReel.Actors
 
             // stat 2
             //{
-            //    var actorStat2 = Context.ActorOf( Props.Create( () => new StatAvgAppointmentDurationActor( _hospital, Self ) ), ActorPaths.StatAvgAppointmentDurationActorName );
+            //    var actorStat2 = Context.ActorOf( Props.Create( () => new StatAvgAppointmentDurationActor( _hospital ) ), ActorPaths.StatAvgAppointmentDurationActorName );
             //    _hospitalStatActors[ StatisticType.AvgAppointmentDuration ] = actorStat2;
 
             //    _hospitalStatActors[ StatisticType.AvgAppointmentDuration ].Tell( new SubscribeStatistic( StatisticType.AvgAppointmentDuration, _dashboardActor ) );
@@ -68,34 +67,24 @@ namespace SurveillanceTempsReel.Actors
 
             // stat 3
             {
-                var actorStat3 = Context.ActorOf(Props.Create(() => new StatDiseaseActor(_hospital, Self)), ActorPaths.StatDiseaseActorName);
-                _hospitalStatActors[StatisticType.Illness] = actorStat3;
-
-                // TODO JS : 
-                // - Create message e.g. "SelectHospitalForChart"
-                // - When rightful coordinator receive msg, send messages to dashboard actor to initialize, then register series
-                // - Stat actors that are for selected hospital must stop sending to dashboard actor, but continue updating perf. counters
-                //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart() );
-                _dashboardActor.Tell(new DashboardActor.AddSeriesToStatChart(new Series(StatisticType.Illness.ToString()) { ChartType = SeriesChartType.FastLine, Color = Color.Aqua }));
+                var actorStat3 = Context.ActorOf( Props.Create( () => new StatDiseaseActor( _hospital ) ), ActorPaths.StatDiseaseActorName );
+                _hospitalStatActors[ StatisticType.Illness ] = actorStat3;
+                
+                //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart( new Series( StatisticType.Illness.ToString() ) { ChartType = SeriesChartType.FastLine, Color = Color.Aqua } ) );
 
                 // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
-                _hospitalStatActors[StatisticType.Illness].Tell(new SubscribeStatistic(StatisticType.Illness, _dashboardActor));
+                _hospitalStatActors[ StatisticType.Illness ].Tell( new SubscribeStatistic( StatisticType.Illness, _dashboardActor ) );
             }
 
             // stat 4
             {
-                var actorStat4 = Context.ActorOf(Props.Create(() => new StatEstimatedTimeToSeeADoctorActor(_hospital, Self)), ActorPaths.StatEstimatedTimeToSeeADoctorActorName);
-                _hospitalStatActors[StatisticType.EstimatedTimeToSeeADoctor] = actorStat4;
+                var actorStat4 = Context.ActorOf( Props.Create( () => new StatEstimatedTimeToSeeADoctorActor( _hospital ) ), ActorPaths.StatEstimatedTimeToSeeADoctorActorName );
+                _hospitalStatActors[ StatisticType.EstimatedTimeToSeeADoctor ] = actorStat4;
 
-                // TODO JS : 
-                // - Create message e.g. "SelectHospitalForChart"
-                // - When rightful coordinator receive msg, send messages to dashboard actor to initialize, then register series
-                // - Stat actors that are for selected hospital must stop sending to dashboard actor, but continue updating perf. counters
-                //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart() );
-                _dashboardActor.Tell(new DashboardActor.AddSeriesToStatChart(new Series(StatisticType.EstimatedTimeToSeeADoctor.ToString()) { ChartType = SeriesChartType.FastLine, Color = Color.Blue }));
+                //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart( new Series( StatisticType.EstimatedTimeToSeeADoctor.ToString() ) { ChartType = SeriesChartType.FastLine, Color = Color.Blue } ) );
 
                 // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
-                _hospitalStatActors[StatisticType.EstimatedTimeToSeeADoctor].Tell(new SubscribeStatistic(StatisticType.EstimatedTimeToSeeADoctor, _dashboardActor));
+                _hospitalStatActors[ StatisticType.EstimatedTimeToSeeADoctor ].Tell( new SubscribeStatistic( StatisticType.EstimatedTimeToSeeADoctor, _dashboardActor ) );
             }
 
             // crée un routeur pour broadcaster les messages vers les acteurs de statistiques
@@ -105,7 +94,7 @@ namespace SurveillanceTempsReel.Actors
                ActorPaths.GetActorPath( ActorType.StatDiseaseActor, _hospital.Id ),
                ActorPaths.GetActorPath( ActorType.StatEstimatedTimeToSeeADoctorActor, _hospital.Id ) ) ) );
 
-            // crée une acteur pour obtenir les événements de la BD et les propager dans le système d'acteurs.
+            // crée un acteur pour obtenir les événements de la BD et les propager dans le système d'acteurs.
             _eventFetcherActor = Context.ActorOf( Props.Create( () => new HospitalEventFetcherActor( _hospital, MedWatchDAL.ConnectionString ) ) );
             _eventFetcherActor.Tell( new SubscribeEventFetcher( _coordinatorActor ));
 

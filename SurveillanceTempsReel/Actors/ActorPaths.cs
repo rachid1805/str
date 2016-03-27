@@ -82,16 +82,4 @@ namespace SurveillanceTempsReel.Actors
             return $"{HospitalCoordinatorActorName}_H{hospitalId}";
         }
     }
-    
-    public class ActorMetaData
-    {
-        public string Name { get; private set; }
-        public string Path { get; private set; }
-
-        public ActorMetaData( string name, string path )
-        {
-            Name = name;
-            Path = path;
-        }
-    }
 }

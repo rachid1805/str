@@ -14,9 +14,7 @@ namespace SurveillanceTempsReel.Actors
         #region Fields and constants
 
         private readonly Hospital _hospital;
-
-        private readonly IActorRef _hospitalCoordinator;
-
+        
         private readonly HashSet<IActorRef> _subscriptions;
 
         private readonly ICancelable _cancelPublishing;
@@ -26,10 +24,9 @@ namespace SurveillanceTempsReel.Actors
 
         #endregion
 
-        public StatDiseaseActor( Hospital hospital, IActorRef hospitalCoordinator )
+        public StatDiseaseActor( Hospital hospital )
         {
             _hospital = hospital;
-            _hospitalCoordinator = hospitalCoordinator;
             _subscriptions = new HashSet<IActorRef>();
             _cancelPublishing = new Cancelable( Context.System.Scheduler );
             
