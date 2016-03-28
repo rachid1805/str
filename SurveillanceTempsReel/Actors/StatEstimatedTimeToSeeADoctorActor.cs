@@ -21,10 +21,12 @@ namespace SurveillanceTempsReel.Actors
         private readonly ICancelable _cancelPublishing;
 
         private PerformanceCounter _counter;
-        private PerformanceCounter _baseCounter;
+        //private PerformanceCounter _baseCounter;
 
         private Dictionary<DiseasePriority, Dictionary<int, RegisterPatient>> _patients;
         private Dictionary<int, BeginAppointmentWithDoctor> _doctors;
+        private double _avgDuration;
+        private long _statCount;
 
         #endregion
 
@@ -42,9 +44,9 @@ namespace SurveillanceTempsReel.Actors
         protected override void PreStart()
         {
             _counter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.EstimatedTimeToSeeADoctor, _hospital.Id ), false );
-            _baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.EstimatedTimeToSeeADoctor, _hospital.Id ), false );
+            //_baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.EstimatedTimeToSeeADoctor, _hospital.Id ), false );
             _counter.RawValue = 0;
-            _baseCounter.RawValue = 0;
+            //_baseCounter.RawValue = 0;
 
             _patients = new Dictionary<DiseasePriority, Dictionary<int, RegisterPatient>>();
             for (var diseasePriority = DiseasePriority.VeryHigh; diseasePriority < DiseasePriority.Invalid; ++diseasePriority)
@@ -53,15 +55,19 @@ namespace SurveillanceTempsReel.Actors
             }
 
             _doctors = new Dictionary<int, BeginAppointmentWithDoctor>();
+            _avgDuration = 0.0d;
+            _statCount = 0;
         }
 
         protected override void PostStop()
         {
             try
             {
-                _cancelPublishing.Cancel( false ); 
+                var average = _avgDuration;
+                _cancelPublishing.Cancel( false );
+                _counter.RawValue = 0;
                 _counter.Dispose();
-                _baseCounter.Dispose();
+                //_baseCounter.Dispose();
             }
             catch
             {
@@ -99,6 +105,8 @@ namespace SurveillanceTempsReel.Actors
             {
                 _patients[rp.Disease.Priority].Add( rp.PatientId, rp );
 
+                var stopwatch = Stopwatch.StartNew();
+
                 if (_doctors.Count == 0)
                 {
                     // Aucun docteur n'est encore enregistré, le temsp d'attente est indéfini
@@ -107,28 +115,28 @@ namespace SurveillanceTempsReel.Actors
 
                 // Trier le temps d'occupation de tous les médecins
                 var remainingTimeDoctor = new List<long>(_doctors.Count);
-                for (var index = 0; index < _doctors.Count; ++index)
+                foreach (var doctor in _doctors)
                 {
-                    var patient = _doctors[index];
+                    var patient = doctor.Value;
                     if (patient == null)
                     {
                         // Médecin sans patient
-                        remainingTimeDoctor[index] = 0;
+                        remainingTimeDoctor.Add(0);
                     }
                     else
                     {
                         var diseaseInCharge = patient.Disease;
-                        var requiredTimeForDisease = ConvertTimeToTicks(diseaseInCharge.RequiredTime, diseaseInCharge.TimeUnit);
+                        var requiredTimeForDisease = ConvertTimeToMilliSec(diseaseInCharge.RequiredTime, diseaseInCharge.TimeUnit);
                         var elapsedTime = (DateTime.Now - patient.StartTime).Ticks;
                         if (elapsedTime > requiredTimeForDisease)
                         {
                             // Le médecin a terminé avec ce patient
-                            remainingTimeDoctor[index] = 0;
+                            remainingTimeDoctor.Add(0);
                         }
                         else
                         {
                             // Le temps qui reste au médecin avant de se libérer
-                            remainingTimeDoctor[index] = requiredTimeForDisease - elapsedTime;
+                            remainingTimeDoctor.Add(requiredTimeForDisease - elapsedTime);
                         }
                     }
                 }
@@ -142,13 +150,19 @@ namespace SurveillanceTempsReel.Actors
                         remainingTimeDoctor.Sort();
 
                         // Le premier médecin qui va se libérer
-                        _counter.IncrementBy(remainingTimeDoctor[0]);
-                        _baseCounter.Increment();
+                        var waitingTime = remainingTimeDoctor[0];
+                        _avgDuration = ((_avgDuration * _statCount) + waitingTime) / (++_statCount);
+                        _counter.RawValue = (long)_avgDuration;
+                        //_counter.IncrementBy(remainingTimeDoctor[0]);
+                        //_baseCounter.Increment();
 
                         // Rajouter à ce médecin le temps d'occupation avec ce nouveau patient
-                        remainingTimeDoctor[0] += ConvertTimeToTicks(patient.Value.Disease.RequiredTime, patient.Value.Disease.TimeUnit);
+                        remainingTimeDoctor[0] += ConvertTimeToMilliSec(patient.Value.Disease.RequiredTime, patient.Value.Disease.TimeUnit);
                     }
                 }
+
+                Console.WriteLine("StatEstimatedTimeToSeeADoctorActor.Processing: Elapsed time = {0} ms. Average time = {1}", stopwatch.ElapsedMilliseconds, _avgDuration);
+                stopwatch.Stop();
             } );
 
             Receive<BeginAppointmentWithDoctor>(bawd =>
@@ -162,45 +176,51 @@ namespace SurveillanceTempsReel.Actors
                     _doctors.Add(bawd.DoctorId, bawd);
                 }
 
-                foreach (var patientList in _patients.Values)
+                for (var diseasePriority = DiseasePriority.VeryHigh; diseasePriority < DiseasePriority.Invalid; ++diseasePriority)
                 {
-                    RegisterPatient registredPatient;
-                    if (!patientList.TryGetValue(bawd.PatientId, out registredPatient)) continue;
-                    patientList.Remove(bawd.PatientId);
-                    break;
+                    var patientList = _patients[diseasePriority];
+                    if (patientList.ContainsKey(bawd.PatientId))
+                    {
+                        patientList.Remove(bawd.PatientId);
+                        break;
+                    }
                 }
             } );
 
             Receive<UnregisterPatient>(urp =>
             {
-                foreach (var doctor in _doctors.Where(doctor => doctor.Value.PatientId.Equals(urp.PatientId)))
+                //foreach (var doctor in _doctors.Where(doctor => doctor.Value.PatientId.Equals(urp.PatientId)))
+                foreach (var doctor in _doctors)
                 {
-                    _doctors[doctor.Key] = null;
-                    break;
+                    if ((doctor.Value != null) && doctor.Value.PatientId.Equals(urp.PatientId))
+                    {
+                        _doctors[doctor.Key] = null;
+                        break;
+                    }
                 }
             });
         }
 
-        private static long ConvertTimeToTicks(int time, RequiredTimeUnit timeUnit)
+        private static long ConvertTimeToMilliSec(int time, RequiredTimeUnit timeUnit)
         {
-            // 10000 ticks par ms
-            long ticks = time * 10000;
+            long timeMs;
 
             switch (timeUnit)
             {
                 case RequiredTimeUnit.Min:
-                    ticks = ticks * 1000 * 60;
+                    timeMs = time * 1000 * 60;
                     break;
                 case RequiredTimeUnit.Sec:
-                    ticks = ticks * 1000;
+                    timeMs = time * 1000;
                     break;
                 case RequiredTimeUnit.MilliSec:
+                    timeMs = time;
                     break;
                 default:
                     throw new ApplicationException("Unsupported unit");
             }
 
-            return ticks;
+            return timeMs;
         }
     }
 }

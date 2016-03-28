@@ -20,13 +20,11 @@ namespace SurveillanceTempsReel.Actors
         private readonly ICancelable _cancelPublishing;
 
         private PerformanceCounter _counter;
-        private PerformanceCounter _baseCounter;
+        //private PerformanceCounter _baseCounter;
 
         private Dictionary<int, DateTime> _patients;
-
-        //private double _avgMinutesToSeeADoctor;
-
-        //private int _statCount;
+        private double _avgDuration;
+        private long _statCount;
 
         #endregion
 
@@ -44,33 +42,24 @@ namespace SurveillanceTempsReel.Actors
         protected override void PreStart()
         {
             _counter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), false );
-            _baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), false );
+            //_baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), false );
             _counter.RawValue = 0;
-            _baseCounter.RawValue = 0;
+            //_baseCounter.RawValue = 0;
 
             _patients = new Dictionary<int, DateTime>();
-            
-            //_avgMinutesToSeeADoctor = 0.0d;
-            //_statCount = 0;
-
-            // cédule une tâche pour nous envoyer régulièrement un message
-            // pour rafraîchir le "dashboard".
-            //Context.System.Scheduler.ScheduleTellRepeatedly(
-            //    TimeSpan.FromMilliseconds( 250 ),           // TODO tweak numbers
-            //    TimeSpan.FromMilliseconds( 250 ),
-            //    Self,
-            //    new GatherStats(),
-            //    Self,
-            //    _cancelPublishing );
+            _avgDuration = 0.0d;
+            _statCount = 0;
         }
 
         protected override void PostStop()
         {
             try
             {
-                _cancelPublishing.Cancel( false ); 
+                var average = _avgDuration;
+                _cancelPublishing.Cancel( false );
+                _counter.RawValue = 0;
                 _counter.Dispose();
-                _baseCounter.Dispose();
+                //_baseCounter.Dispose();
             }
             catch
             {
@@ -116,11 +105,10 @@ namespace SurveillanceTempsReel.Actors
                 DateTime arrivalTime;
                 if ( _patients.TryGetValue( bawd.PatientId, out arrivalTime ) )
                 {
-                    //var waitingMinutes = ( bawd.StartTime - arrivalTime ).TotalMinutes;
-                    //_avgMinutesToSeeADoctor = (_avgMinutesToSeeADoctor + waitingMinutes) / ++_statCount;
-
-                    _counter.IncrementBy( ( bawd.StartTime - arrivalTime ).Ticks );
-                    _baseCounter.Increment();
+                    var duration = (long)(bawd.StartTime - arrivalTime).TotalMilliseconds;
+                    _avgDuration = ((_avgDuration * _statCount) + duration) / (++_statCount);
+                    _counter.RawValue = (long)_avgDuration;
+                    //_baseCounter.Increment();
 
                     _patients.Remove( bawd.PatientId );
                 }

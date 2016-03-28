@@ -108,22 +108,27 @@ namespace SurveillanceTempsReel
             foreach ( var h in hospitals )
             {
                 dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgTimeToSeeADoctor, h.Id ),
-                    PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.AverageTimer32 ) );
+                    PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.NumberOfItems64) );
 
-                dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.AvgTimeToSeeADoctor, h.Id),
-                    PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.AverageBase));
+                //dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.AvgTimeToSeeADoctor, h.Id),
+                //    PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.AverageBase));
 
-                //dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceCounterName(StatisticType.Illness, h.Id),
-                //    PerformanceCounterHelper.CounterPerDisease, PerformanceCounterType.RawFraction));
+                dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceCounterName(StatisticType.Illness, h.Id),
+                    PerformanceCounterHelper.CounterPerDisease, PerformanceCounterType.NumberOfItems64));
 
                 //dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.Illness, h.Id),
                 //    PerformanceCounterHelper.CounterPerDisease, PerformanceCounterType.RawBase));
 
                 // TODO ajouter autres compteurs
 
-                //dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgAppointmentDuration, h.Id ),
-                //    PerformanceCounterHelper.CounterAvgAppointmentDuration, PerformanceCounterType.AverageTimer32 ) );
+                dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgAppointmentDuration, h.Id ),
+                    PerformanceCounterHelper.CounterAvgAppointmentDuration, PerformanceCounterType.NumberOfItems64 ) );
 
+                //dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.AvgAppointmentDuration, h.Id),
+                //    PerformanceCounterHelper.CounterAvgAppointmentDuration, PerformanceCounterType.AverageBase));
+
+                dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceCounterName(StatisticType.EstimatedTimeToSeeADoctor, h.Id),
+                    PerformanceCounterHelper.CounterEstimatedTimeToSeeADoctor, PerformanceCounterType.NumberOfItems64));
             }
 
             // TODO il faut une categorie pour chaque calcul! (compteurs par calcul (categorie))

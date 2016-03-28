@@ -17,6 +17,7 @@ namespace PatientGenerator
         private readonly IDictionary<DiseasePriority, IList<IPatientArrival>> _patientsArrival;
         private readonly IList<IPatientTakenInChargeByDoctor> _patientsTakenInChargeByDoctor;
         private readonly IList<Disease> _diseases;
+        private readonly IList<int> _patientIds;
         private readonly Stopwatch _stopWatch;
         private static readonly NLog.Logger s_logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -31,6 +32,7 @@ namespace PatientGenerator
             _freeDoctors = new Dictionary<int, IList<int>>();
             _busyDoctors = new Dictionary<int, IList<int>>();
             _patientsTakenInChargeByDoctor = new List<IPatientTakenInChargeByDoctor>();
+            _patientIds = new List<int>();
             _stopWatch = new Stopwatch();
 
             // Assign doctors to each hospital
@@ -60,13 +62,20 @@ namespace PatientGenerator
 
         public IPatientArrival GeneratePatientArrival()
         {
-            var patientArrival = new PatientArrival(GeneratorHelper.RandomNumericalValue(int.MaxValue),
+            var patientId = GeneratorHelper.RandomNumericalValue(int.MaxValue);
+            while (_patientIds.Contains(patientId))
+            {
+                s_logger.Trace("Patient {0} already exist. Generated new one...", patientId);
+                patientId = GeneratorHelper.RandomNumericalValue(int.MaxValue);
+            }
+            var patientArrival = new PatientArrival(patientId,
                 _hospitals[GeneratorHelper.RandomNumericalValue(_hospitals.Count)].Id,
                 _diseases[GeneratorHelper.RandomNumericalValue(_diseases.Count)],
                 DateTime.Now);
 
             // Keep the new generated patient in the arrival list
             _patientsArrival[patientArrival.Disease.Priority].Add(patientArrival);
+            _patientIds.Add(patientId);
 
             return patientArrival;
         }
@@ -127,6 +136,7 @@ namespace PatientGenerator
 
                         // Remove this patient from the arrival list
                         patientList.Remove(patientArrival);
+                        _patientIds.Remove(patientArrival.PatientId);
                         _stopWatch.Stop();
 
                         return patientTakenInChargeByDoctor;

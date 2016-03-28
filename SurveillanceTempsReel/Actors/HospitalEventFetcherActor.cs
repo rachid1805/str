@@ -48,7 +48,7 @@ namespace SurveillanceTempsReel.Actors
         protected override void PreStart()
         {
             _log.Debug( "PreStart" );
-            
+
             _lastEventId = 0;           // TODO restore state
 
             _diseases = InitDiseases();
@@ -56,8 +56,8 @@ namespace SurveillanceTempsReel.Actors
             // cédule une tâche pour nous envoyer régulièrement un message
             // pour obtenir les derniers événements de l'hôpital
             Context.System.Scheduler.ScheduleTellRepeatedly(
-                TimeSpan.FromMilliseconds( 250 ),           // TODO : tweak these numbers
-                TimeSpan.FromMilliseconds( 250 ),
+                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 1000 ),
                 Self,
                 new FetchHostpitalEvents(),
                 Self,
@@ -106,7 +106,7 @@ namespace SurveillanceTempsReel.Actors
 
                     _lastEventId = dbe.EventId;
                 }
-                
+
                 _log.Debug( $"Number of events fetched: {dbEvents.Count()}" );
             } );
 
@@ -154,16 +154,9 @@ namespace SurveillanceTempsReel.Actors
 
         private static Dictionary<DiseaseType, Disease> InitDiseases()
         {
-            var diseasesByType = new Dictionary<DiseaseType, Disease>();
-            
             var diseases = MedWatchDAL.FindDiseases();
 
-            foreach (var d in diseases)
-            {
-                diseasesByType.Add(d.Id, d);
-            }
-
-            return diseasesByType;
+            return diseases.ToDictionary(d => d.Id);
         }
 
         #endregion

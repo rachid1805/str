@@ -44,8 +44,8 @@ namespace SurveillanceTempsReel.Actors
 
             // stat 1
             {
-                var actorStat1 = Context.ActorOf( Props.Create( () => new StatAvgTimeToSeeADoctorActor( _hospital ) ), ActorPaths.StatAvgTimeToSeeADoctorActorName );
-                _hospitalStatActors[ StatisticType.AvgTimeToSeeADoctor ] = actorStat1;
+                var actorStat1 = Context.ActorOf(Props.Create(() => new StatAvgTimeToSeeADoctorActor(_hospital)), ActorPaths.StatAvgTimeToSeeADoctorActorName);
+                _hospitalStatActors[StatisticType.AvgTimeToSeeADoctor] = actorStat1;
 
                 // TODO JS : 
                 // - Create message e.g. "SelectHospitalForChart"
@@ -54,43 +54,46 @@ namespace SurveillanceTempsReel.Actors
                 //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart( new Series( StatisticType.AvgTimeToSeeADoctor.ToString() ) { ChartType = SeriesChartType.FastLine, Color = Color.DarkGreen } ) );
 
                 // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
-                _hospitalStatActors[ StatisticType.AvgTimeToSeeADoctor ].Tell( new SubscribeStatistic( StatisticType.AvgTimeToSeeADoctor, _dashboardActor ) );
+                _hospitalStatActors[StatisticType.AvgTimeToSeeADoctor].Tell(new SubscribeStatistic(StatisticType.AvgTimeToSeeADoctor, _dashboardActor));
             }
 
             // stat 2
-            //{
-            //    var actorStat2 = Context.ActorOf( Props.Create( () => new StatAvgAppointmentDurationActor( _hospital ) ), ActorPaths.StatAvgAppointmentDurationActorName );
-            //    _hospitalStatActors[ StatisticType.AvgAppointmentDuration ] = actorStat2;
+            {
+                var actorStat2 = Context.ActorOf(Props.Create(() => new StatAvgAppointmentDurationActor(_hospital)), ActorPaths.StatAvgAppointmentDurationActorName);
+                _hospitalStatActors[StatisticType.AvgAppointmentDuration] = actorStat2;
 
-            //    _hospitalStatActors[ StatisticType.AvgAppointmentDuration ].Tell( new SubscribeStatistic( StatisticType.AvgAppointmentDuration, _dashboardActor ) );
-            //}
+                _hospitalStatActors[StatisticType.AvgAppointmentDuration].Tell(new SubscribeStatistic(StatisticType.AvgAppointmentDuration, _dashboardActor));
+            }
 
             // stat 3
-            //{
-            //    var actorStat3 = Context.ActorOf( Props.Create( () => new StatDiseaseActor( _hospital ) ), ActorPaths.StatDiseaseActorName );
-            //    _hospitalStatActors[ StatisticType.Illness ] = actorStat3;
+            {
+                var actorStat3 = Context.ActorOf(Props.Create(() => new StatDiseaseActor(_hospital)), ActorPaths.StatDiseaseActorName);
+                _hospitalStatActors[StatisticType.Illness] = actorStat3;
 
-            //    //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart( new Series( StatisticType.Illness.ToString() ) { ChartType = SeriesChartType.FastLine, Color = Color.Aqua } ) );
+                //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart( new Series( StatisticType.Illness.ToString() ) { ChartType = SeriesChartType.FastLine, Color = Color.Aqua } ) );
 
-            //    // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
-            //    _hospitalStatActors[ StatisticType.Illness ].Tell( new SubscribeStatistic( StatisticType.Illness, _dashboardActor ) );
-            //}
+                // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
+                _hospitalStatActors[StatisticType.Illness].Tell(new SubscribeStatistic(StatisticType.Illness, _dashboardActor));
+            }
 
             // stat 4
-            //{
-            //    var actorStat4 = Context.ActorOf( Props.Create( () => new StatEstimatedTimeToSeeADoctorActor( _hospital ) ), ActorPaths.StatEstimatedTimeToSeeADoctorActorName );
-            //    _hospitalStatActors[ StatisticType.EstimatedTimeToSeeADoctor ] = actorStat4;
+            {
+                var actorStat4 = Context.ActorOf(Props.Create(() => new StatEstimatedTimeToSeeADoctorActor(_hospital)), ActorPaths.StatEstimatedTimeToSeeADoctorActorName);
+                _hospitalStatActors[StatisticType.EstimatedTimeToSeeADoctor] = actorStat4;
 
-            //    //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart( new Series( StatisticType.EstimatedTimeToSeeADoctor.ToString() ) { ChartType = SeriesChartType.FastLine, Color = Color.Blue } ) );
+                //_dashboardActor.Tell( new DashboardActor.AddSeriesToStatChart( new Series( StatisticType.EstimatedTimeToSeeADoctor.ToString() ) { ChartType = SeriesChartType.FastLine, Color = Color.Blue } ) );
 
-            //    // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
-            //    _hospitalStatActors[ StatisticType.EstimatedTimeToSeeADoctor ].Tell( new SubscribeStatistic( StatisticType.EstimatedTimeToSeeADoctor, _dashboardActor ) );
-            //}
+                // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
+                _hospitalStatActors[StatisticType.EstimatedTimeToSeeADoctor].Tell(new SubscribeStatistic(StatisticType.EstimatedTimeToSeeADoctor, _dashboardActor));
+            }
 
             // crée un routeur pour broadcaster les messages vers les acteurs de statistiques
             // TODO ajouter les paths des autres acteurs de stats 
             _coordinatorActor = Context.ActorOf(Props.Empty.WithRouter(new BroadcastGroup(
-               ActorPaths.GetActorPath(ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id))), "router");
+                ActorPaths.GetActorPath(ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id),
+                ActorPaths.GetActorPath(ActorType.StatAvgAppointmentDurationActor, _hospital.Id),
+                ActorPaths.GetActorPath(ActorType.StatDiseaseActor, _hospital.Id),
+                ActorPaths.GetActorPath(ActorType.StatEstimatedTimeToSeeADoctorActor, _hospital.Id))), "router");
             //_coordinatorActor = Context.ActorOf( Props.Empty.WithRouter( new BroadcastGroup(
             //   ActorPaths.GetActorPath( ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id ),
             //   ActorPaths.GetActorPath( ActorType.StatDiseaseActor, _hospital.Id ),

@@ -20,7 +20,9 @@ namespace SurveillanceTempsReel.Actors
         private readonly ICancelable _cancelPublishing;
 
         private PerformanceCounter _counter;
-        private PerformanceCounter _baseCounter;
+        //private PerformanceCounter _baseCounter;
+
+        private long _statCount;
 
         #endregion
 
@@ -38,9 +40,9 @@ namespace SurveillanceTempsReel.Actors
         protected override void PreStart()
         {
             _counter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.Illness, _hospital.Id ), false );
-            _baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.Illness, _hospital.Id ), false );
+            //_baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.Illness, _hospital.Id ), false );
             _counter.RawValue = 0;
-            _baseCounter.RawValue = 0;
+            //_baseCounter.RawValue = 0;
         }
 
         protected override void PostStop()
@@ -49,7 +51,7 @@ namespace SurveillanceTempsReel.Actors
             {
                 _cancelPublishing.Cancel( false ); 
                 _counter.Dispose();
-                _baseCounter.Dispose();
+                //_baseCounter.Dispose();
             }
             catch
             {
@@ -88,9 +90,9 @@ namespace SurveillanceTempsReel.Actors
                 // Surveiller par exemple l'éclosion de l'influenza
                 if (rp.Disease.Id == DiseaseType.Influenza)
                 {
-                    _counter.Increment();
+                    _counter.RawValue = ++_statCount;
                 }
-                _baseCounter.Increment();
+                //_baseCounter.Increment();
             } );
         }
     }
