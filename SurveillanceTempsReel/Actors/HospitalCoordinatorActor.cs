@@ -34,9 +34,13 @@ namespace SurveillanceTempsReel.Actors
             _hospital = hospital;
             _dashboardActor = dashboardActor;
             _hospitalStatActors = new Dictionary<StatisticType, IActorRef>();
+
+            Processing();
         }
 
         #endregion 
+
+        #region Actor lifecycle methods
 
         protected override void PreStart()
         {
@@ -88,17 +92,12 @@ namespace SurveillanceTempsReel.Actors
             }
 
             // crée un routeur pour broadcaster les messages vers les acteurs de statistiques
-            // TODO ajouter les paths des autres acteurs de stats 
             _coordinatorActor = Context.ActorOf(Props.Empty.WithRouter(new BroadcastGroup(
                 ActorPaths.GetActorPath(ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id),
                 ActorPaths.GetActorPath(ActorType.StatAvgAppointmentDurationActor, _hospital.Id),
                 ActorPaths.GetActorPath(ActorType.StatDiseaseActor, _hospital.Id),
                 ActorPaths.GetActorPath(ActorType.StatEstimatedTimeToSeeADoctorActor, _hospital.Id))), "router");
-            //_coordinatorActor = Context.ActorOf( Props.Empty.WithRouter( new BroadcastGroup(
-            //   ActorPaths.GetActorPath( ActorType.StatAvgTimeToSeeADoctorActor, _hospital.Id ),
-            //   ActorPaths.GetActorPath( ActorType.StatDiseaseActor, _hospital.Id ),
-            //   ActorPaths.GetActorPath( ActorType.StatEstimatedTimeToSeeADoctorActor, _hospital.Id ) ) ) );
-
+           
             // crée un acteur pour obtenir les événements de la BD et les propager dans le système d'acteurs.
             _eventFetcherActor = Context.ActorOf( Props.Create( () => new HospitalEventFetcherActor( _hospital, MedWatchDAL.ConnectionString ) ), ActorPaths.HospitalEventFetcherActorName );
             _eventFetcherActor.Tell( new SubscribeEventFetcher( _coordinatorActor ));
@@ -111,5 +110,19 @@ namespace SurveillanceTempsReel.Actors
             _coordinatorActor.Tell( PoisonPill.Instance );
             base.PreRestart( reason, message );
         }
+
+        #endregion
+
+        #region Private methods
+
+        private void Processing()
+        {
+            Receive<TogglePauseFetchingHospitalEvents>( togglePauseFetching =>
+            {
+                _eventFetcherActor.Tell( togglePauseFetching );
+            } );
+        }
+
+        #endregion
     }
 }

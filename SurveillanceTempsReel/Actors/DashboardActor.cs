@@ -63,16 +63,16 @@ namespace SurveillanceTempsReel.Actors
 
         #region Constructors
 
-        public DashboardActor( Chart chart, Button pauseButton ) : this( chart, new Dictionary<string, Series>(), pauseButton )
+        public DashboardActor( Button pauseButton ) : this( new Dictionary<string, Series>(), pauseButton )
         {
         }
 
-        public DashboardActor( Chart chart, Dictionary<string, Series> seriesIndex, Button pauseButton )
+        public DashboardActor( Dictionary<string, Series> seriesIndex, Button pauseButton )
         {
-            _statChart = chart;
+            _statChart = new Chart();       // TODO : deprecated
             _statChartSeries = seriesIndex;
             _pauseButton = pauseButton;
-            Running();
+            Paused();
         }
 
         #endregion
@@ -88,8 +88,12 @@ namespace SurveillanceTempsReel.Actors
 
             Receive<TogglePause>( pause =>
             {
-                SetPauseButtonText( _pauseButton, true );
-                BecomeStacked( Paused );
+                SetPauseButtonText( _pauseButton, paused: true );
+                UnbecomeStacked();
+
+                // Stop fetching hospital events
+                var commander = Context.ActorSelection( ActorPaths.GetActorPath( ActorType.Commander ) );
+                commander.Tell( new TogglePauseFetchingHospitalEvents() );
             } );
         }
 
@@ -100,10 +104,14 @@ namespace SurveillanceTempsReel.Actors
             Receive<Stat>( stat => HandleStatPaused( stat ) );
             Receive<TogglePause>( pause =>
             {
-                SetPauseButtonText( _pauseButton, false );
-                UnbecomeStacked();
+                SetPauseButtonText( _pauseButton, paused: false );
+                BecomeStacked( Running );
                 
                 Stash.UnstashAll();
+
+                // Resume fetching hospital events
+                var commander = Context.ActorSelection( ActorPaths.GetActorPath( ActorType.Commander ) );
+                commander.Tell( new TogglePauseFetchingHospitalEvents() );
             } );
         }
 
@@ -128,7 +136,7 @@ namespace SurveillanceTempsReel.Actors
 
         private static void SetPauseButtonText( Button button, bool paused )
         {
-            button.Text = string.Format( "{0}", !paused ? "Pause ||" : "Continuer ->" );
+            button.Text = string.Format( "{0}", !paused ? "ARRÊTER" : "DÉMARRER" );
         }
 
         #endregion

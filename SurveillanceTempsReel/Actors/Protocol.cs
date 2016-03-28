@@ -34,7 +34,9 @@ namespace SurveillanceTempsReel.Actors
     }
 
     public class FetchHostpitalEvents { }
-    
+
+    public class TogglePauseFetchingHospitalEvents { }
+
     public class Watch
     {
         public StatisticType Statistic { get; private set; }

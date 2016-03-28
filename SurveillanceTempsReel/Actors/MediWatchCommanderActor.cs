@@ -22,12 +22,25 @@ namespace SurveillanceTempsReel.Actors
         {
             _dashboardActor = dashboardActor;
             _hospitalCoordinatorActors = InitializeHospitalCoordinatorActors( hospitals );
+
+            Processing();
         }
 
         #endregion
 
         #region Private methods
         
+        private void Processing()
+        {
+            Receive<TogglePauseFetchingHospitalEvents>( togglePauseFetching =>
+            {
+                foreach ( var coordinator in _hospitalCoordinatorActors.Values )
+                {
+                    coordinator.Tell( togglePauseFetching );
+                }
+            } );
+        }
+
         private Dictionary<int, IActorRef> InitializeHospitalCoordinatorActors( IEnumerable<Hospital> hospitals )
         {
             var coordinators = new Dictionary<int, IActorRef>();

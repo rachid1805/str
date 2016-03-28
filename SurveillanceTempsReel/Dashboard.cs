@@ -33,6 +33,7 @@ namespace SurveillanceTempsReel
         {
             try
             {
+                btnPauseResume.Enabled = false;
                 this.Text = AppName;
 
                 // TODO JS peut-etre laisser exception se propager jusqu'au client?
@@ -42,18 +43,16 @@ namespace SurveillanceTempsReel
                 var htemp = new[] { hospitals.First() };
 
                 InitPerformanceCounters( htemp );
-                LoadHospitalComboBox( htemp );
-
-                //LoadHospitalComboBox( hospitals );
-
-
-
+                //LoadHospitalComboBox( htemp );            // TODO DEPRECATED
+                
                 // initialization de l'acteur pour le tableau de bord
-                _dashboardActor = Program.MediWatchActors.ActorOf( Props.Create( () => new DashboardActor( statChart, btnPause ) ), ActorPaths.DashboardActorName );
+                _dashboardActor = Program.MediWatchActors.ActorOf( Props.Create( () => new DashboardActor( btnPauseResume ) ), ActorPaths.DashboardActorName );
                 _dashboardActor.Tell( new DashboardActor.InitializeStatChart( null ) );
 
                 // initialization du commander
                 _commanderActor = Program.MediWatchActors.ActorOf( Props.Create( () => new MediWatchCommanderActor( htemp, _dashboardActor ) ), ActorPaths.MediWatchCommanderActorName );
+
+                btnPauseResume.Enabled = true;
             }
             catch ( Exception ex )
             {
@@ -69,32 +68,34 @@ namespace SurveillanceTempsReel
             Program.MediWatchActors.Terminate();
         }
 
-        private void btnPause_Click( object sender, EventArgs e )
+        private void btnPauseResume_Click( object sender, EventArgs e )
         {
-            // TODO
+            _dashboardActor.Tell( new DashboardActor.TogglePause() );
         }
 
-        private void comboHospitals_SelectedIndexChanged( object sender, EventArgs e )
-        {
-            var selectedHospital = comboHospitals.SelectedItem as Hospital;
-            //if ( selectedHospital != null )
-            //    // TODO
-        }
+        // TODO DEPRECATED
+        //private void comboHospitals_SelectedIndexChanged( object sender, EventArgs e )
+        //{
+        //    var selectedHospital = comboHospitals.SelectedItem as Hospital;
+        //    //if ( selectedHospital != null )
+        //    //    // TODO
+        //}
 
         #endregion
 
         #region Private methods
 
-        private void LoadHospitalComboBox( IEnumerable<Hospital> hospitals )
-        {
-            foreach ( var h in hospitals )
-            {
-                comboHospitals.Items.Add( h );
-            }
+        // TODO DEPRECATED
+        //private void LoadHospitalComboBox( IEnumerable<Hospital> hospitals )
+        //{
+        //    foreach ( var h in hospitals )
+        //    {
+        //        comboHospitals.Items.Add( h );
+        //    }
 
-            if ( comboHospitals.Items.Count > 0 )
-                comboHospitals.SelectedIndex = 0;
-        }
+        //    if ( comboHospitals.Items.Count > 0 )
+        //        comboHospitals.SelectedIndex = 0;
+        //}
 
         private void InitPerformanceCounters( IEnumerable<Hospital> hospitals )
         {
@@ -136,5 +137,6 @@ namespace SurveillanceTempsReel
         }
 
         #endregion
+        
     }
 }

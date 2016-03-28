@@ -28,81 +28,18 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.statChart = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.btnPause = new System.Windows.Forms.Button();
-            this.comboHospitals = new System.Windows.Forms.ComboBox();
-            this.tableLayoutPanel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.statChart)).BeginInit();
-            this.panel1.SuspendLayout();
+            this.btnPauseResume = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
-            // tableLayoutPanel1
+            // btnPauseResume
             // 
-            this.tableLayoutPanel1.ColumnCount = 2;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 150F));
-            this.tableLayoutPanel1.Controls.Add(this.statChart, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.panel1, 1, 0);
-            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 2;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(890, 576);
-            this.tableLayoutPanel1.TabIndex = 2;
-            // 
-            // statChart
-            // 
-            chartArea1.Name = "ChartArea1";
-            this.statChart.ChartAreas.Add(chartArea1);
-            this.statChart.Dock = System.Windows.Forms.DockStyle.Fill;
-            legend1.Name = "Legend1";
-            this.statChart.Legends.Add(legend1);
-            this.statChart.Location = new System.Drawing.Point(3, 3);
-            this.statChart.Name = "statChart";
-            series1.ChartArea = "ChartArea1";
-            series1.Legend = "Legend1";
-            series1.Name = "Series1";
-            this.statChart.Series.Add(series1);
-            this.statChart.Size = new System.Drawing.Size(734, 282);
-            this.statChart.TabIndex = 0;
-            this.statChart.Text = "chart1";
-            // 
-            // panel1
-            // 
-            this.panel1.Controls.Add(this.btnPause);
-            this.panel1.Controls.Add(this.comboHospitals);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(743, 3);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(144, 282);
-            this.panel1.TabIndex = 1;
-            // 
-            // btnPause
-            // 
-            this.btnPause.Location = new System.Drawing.Point(28, 65);
-            this.btnPause.Name = "btnPause";
-            this.btnPause.Size = new System.Drawing.Size(75, 23);
-            this.btnPause.TabIndex = 1;
-            this.btnPause.Text = "Pause";
-            this.btnPause.UseVisualStyleBackColor = true;
-            this.btnPause.Click += new System.EventHandler(this.btnPause_Click);
-            // 
-            // comboHospitals
-            // 
-            this.comboHospitals.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboHospitals.FormattingEnabled = true;
-            this.comboHospitals.Location = new System.Drawing.Point(3, 9);
-            this.comboHospitals.Name = "comboHospitals";
-            this.comboHospitals.Size = new System.Drawing.Size(138, 21);
-            this.comboHospitals.TabIndex = 0;
-            this.comboHospitals.SelectedIndexChanged += new System.EventHandler(this.comboHospitals_SelectedIndexChanged);
+            this.btnPauseResume.Location = new System.Drawing.Point(57, 35);
+            this.btnPauseResume.Name = "btnPauseResume";
+            this.btnPauseResume.Size = new System.Drawing.Size(105, 23);
+            this.btnPauseResume.TabIndex = 0;
+            this.btnPauseResume.Text = "DÉMARRER";
+            this.btnPauseResume.UseVisualStyleBackColor = true;
+            this.btnPauseResume.Click += new System.EventHandler(this.btnPauseResume_Click);
             // 
             // Dashboard
             // 
@@ -110,25 +47,18 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(890, 576);
-            this.Controls.Add(this.tableLayoutPanel1);
+            this.Controls.Add(this.btnPauseResume);
             this.Name = "Dashboard";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Dashboard";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Dashboard_FormClosing);
             this.Load += new System.EventHandler(this.Dashboard_Load);
-            this.tableLayoutPanel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.statChart)).EndInit();
-            this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-        private System.Windows.Forms.DataVisualization.Charting.Chart statChart;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.ComboBox comboHospitals;
-        private System.Windows.Forms.Button btnPause;
+        private System.Windows.Forms.Button btnPauseResume;
     }
 }

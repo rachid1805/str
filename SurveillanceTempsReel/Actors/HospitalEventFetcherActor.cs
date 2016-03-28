@@ -12,11 +12,13 @@ namespace SurveillanceTempsReel.Actors
     /// Acteur responsable de lire les événements de la base de données 
     /// et de les envoyer aux récipients.
     /// </summary>
-    public class HospitalEventFetcherActor : ReceiveActor
+    public class HospitalEventFetcherActor : ReceiveActor, IWithUnboundedStash
     {
         #region Fields and constants
 
         private static readonly int MaxCountPerFetch = 1000;
+
+        public IStash Stash { get; set; }
 
         private readonly Hospital _hospital;
         private readonly string _connectionString;
@@ -37,10 +39,9 @@ namespace SurveillanceTempsReel.Actors
             _hospital = hospital;
             _connectionString = connectionString;
             _subscriptions = new HashSet<IActorRef>();
-            _cancelFetching = new Cancelable(Context.System.Scheduler);
             _diseases = new Dictionary<DiseaseType, Disease>();
 
-            Fetching();
+            Paused();
         }
 
         #region Actor lifecycle methods
@@ -52,16 +53,6 @@ namespace SurveillanceTempsReel.Actors
             _lastEventId = 0;           // TODO restore state
 
             _diseases = InitDiseases();
-
-            // cédule une tâche pour nous envoyer régulièrement un message
-            // pour obtenir les derniers événements de l'hôpital
-            Context.System.Scheduler.ScheduleTellRepeatedly(
-                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
-                TimeSpan.FromMilliseconds( 1000 ),
-                Self,
-                new FetchHostpitalEvents(),
-                Self,
-                _cancelFetching );
         }
 
         // TODO : this is a good place to (see p.76):
@@ -76,7 +67,7 @@ namespace SurveillanceTempsReel.Actors
         {
             try
             {
-                _cancelFetching.Cancel( false );
+                _cancelFetching?.Cancel( false );
             }
             catch
             {
@@ -94,22 +85,6 @@ namespace SurveillanceTempsReel.Actors
 
         private void Fetching()
         {
-            Receive<FetchHostpitalEvents>( bof =>
-            {
-                _log.Debug( $"Fetching hospital events after event id {_lastEventId}" );
-                var dbEvents = MedWatchDAL.FindHospitalEventsAfter( _hospital.Id, _lastEventId, MaxCountPerFetch);
-
-                foreach (var dbe in dbEvents)
-                {
-                    var actorEvent = ConvertToActorEvent(dbe);
-                    Publish(actorEvent);
-
-                    _lastEventId = dbe.EventId;
-                }
-
-                _log.Debug( $"Number of events fetched: {dbEvents.Count()}" );
-            } );
-
             Receive<SubscribeEventFetcher>( sc =>
             {
                 _subscriptions.Add( sc.Subscriber );
@@ -119,8 +94,43 @@ namespace SurveillanceTempsReel.Actors
             {
                 _subscriptions.Remove( uc.Subscriber );
             } );
+
+            Receive<FetchHostpitalEvents>( fetch =>
+            {
+                _log.Debug( $"Fetching hospital events after event id {_lastEventId}" );
+                var dbEvents = MedWatchDAL.FindHospitalEventsAfter( _hospital.Id, _lastEventId, MaxCountPerFetch );
+
+                foreach ( var dbe in dbEvents )
+                {
+                    var actorEvent = ConvertToActorEvent( dbe );
+                    Publish( actorEvent );
+
+                    _lastEventId = dbe.EventId;
+                }
+
+                _log.Debug( $"Number of events fetched: {dbEvents.Count()}" );
+            } );
+
+            Receive<TogglePauseFetchingHospitalEvents>( togglePauseFetching =>
+            {
+                _cancelFetching.Cancel( false );
+                UnbecomeStacked();
+            } );
         }
         
+        private void Paused()
+        {
+            Receive<SubscribeEventFetcher>( sc => Stash.Stash() );
+            Receive<UnsubscribeEventFetcher>( uc => Stash.Stash() );
+            Receive<FetchHostpitalEvents>( fetch => Stash.Stash() );
+            Receive<TogglePauseFetchingHospitalEvents>( togglePauseFetching =>
+            {
+                BecomeStacked( Fetching );
+                Stash.UnstashAll();
+                _cancelFetching = ScheduleFetchingTask();
+            } );
+        }
+
         private void Publish(HospitalEvent he)
         {
             foreach (var s in _subscriptions)
@@ -155,8 +165,25 @@ namespace SurveillanceTempsReel.Actors
         private static Dictionary<DiseaseType, Disease> InitDiseases()
         {
             var diseases = MedWatchDAL.FindDiseases();
-
+            
             return diseases.ToDictionary(d => d.Id);
+        }
+
+        /// <summary>
+        /// Cédule une tâche pour nous envoyer régulièrement un message
+        /// pour obtenir les derniers événements de l'hôpital
+        /// </summary>
+        /// <returns></returns>
+        private ICancelable ScheduleFetchingTask()
+        {
+            var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
+                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 1000 ),
+                Self,
+                new FetchHostpitalEvents(),
+                Self );
+
+            return cancellation;
         }
 
         #endregion
