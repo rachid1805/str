@@ -105,7 +105,7 @@ namespace SurveillanceTempsReel.Actors
             {
                 _patients[rp.Disease.Priority].Add( rp.PatientId, rp );
 
-                var stopwatch = Stopwatch.StartNew();
+                //var stopwatch = Stopwatch.StartNew();
 
                 if (_doctors.Count == 0)
                 {
@@ -161,20 +161,18 @@ namespace SurveillanceTempsReel.Actors
                     }
                 }
 
-                Console.WriteLine("StatEstimatedTimeToSeeADoctorActor.Processing: Elapsed time = {0} ms. Average time = {1}", stopwatch.ElapsedMilliseconds, _avgDuration);
-                stopwatch.Stop();
+                //Console.WriteLine("StatEstimatedTimeToSeeADoctorActor.Processing: Elapsed time = {0} ms. Average time = {1}", stopwatch.ElapsedMilliseconds, _avgDuration);
+                //stopwatch.Stop();
             } );
 
             Receive<BeginAppointmentWithDoctor>(bawd =>
             {
-                if (_doctors.ContainsKey(bawd.DoctorId))
+                if ((_doctors.Count >= _hospital.AssignedDoctors) && !_doctors.ContainsKey(bawd.DoctorId))
                 {
-                    _doctors[bawd.DoctorId] = bawd;
+                    // Un nouveau quart de travail :)
+                    _doctors.Clear();
                 }
-                else
-                {
-                    _doctors.Add(bawd.DoctorId, bawd);
-                }
+                _doctors[bawd.DoctorId] = bawd;
 
                 for (var diseasePriority = DiseasePriority.VeryHigh; diseasePriority < DiseasePriority.Invalid; ++diseasePriority)
                 {
