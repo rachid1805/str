@@ -18,7 +18,7 @@ namespace SurveillanceTempsReel.Actors
         
         private readonly HashSet<IActorRef> _subscriptions;
 
-        private readonly ICancelable _cancelPublishing;
+        private ICancelable _cancelPublishing;
 
         private PerformanceCounter _counter;
         //private PerformanceCounter _baseCounter;
@@ -30,14 +30,17 @@ namespace SurveillanceTempsReel.Actors
 
         #endregion
 
+        #region Constructors
+
         public StatEstimatedTimeToSeeADoctorActor( Hospital hospital )
         {
             _hospital = hospital;
             _subscriptions = new HashSet<IActorRef>();
-            _cancelPublishing = new Cancelable( Context.System.Scheduler );
             
             Processing();
         }
+
+        #endregion
 
         #region Actor lifecycle methods
 
@@ -57,13 +60,14 @@ namespace SurveillanceTempsReel.Actors
             _doctors = new Dictionary<int, BeginAppointmentWithDoctor>();
             _avgDuration = 0.0d;
             _statCount = 0;
+
+            _cancelPublishing = ScheduleGatherStatsTask();
         }
 
         protected override void PostStop()
         {
             try
             {
-                var average = _avgDuration;
                 _cancelPublishing.Cancel( false );
                 _counter.RawValue = 0;
                 _counter.Dispose();
@@ -81,11 +85,13 @@ namespace SurveillanceTempsReel.Actors
 
         #endregion
 
+        #region Private methods
+
         private void Processing()
         {
-            Receive<GatherStats>( bof =>
+            Receive<GatherStats>( gs =>
             {
-                var stat = new Stat( StatisticType.EstimatedTimeToSeeADoctor.ToString(), _counter.NextValue() );
+                var stat = new Stat( _hospital.Id, StatisticType.EstimatedTimeToSeeADoctor, _avgDuration );
 
                 foreach ( var sub in _subscriptions )
                     sub.Tell( stat );
@@ -199,6 +205,23 @@ namespace SurveillanceTempsReel.Actors
             });
         }
 
+        /// <summary>
+        /// Cédule une tâche pour nous envoyer régulièrement un message
+        /// pour publier la statistique à jour de l'acteur
+        /// </summary>
+        /// <returns></returns>
+        private ICancelable ScheduleGatherStatsTask()
+        {
+            var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
+                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 1000 ),
+                Self,
+                new GatherStats(),
+                Self );
+
+            return cancellation;
+        }
+
         private static long ConvertTimeToMilliSec(int time, RequiredTimeUnit timeUnit)
         {
             long timeMs;
@@ -220,5 +243,7 @@ namespace SurveillanceTempsReel.Actors
 
             return timeMs;
         }
+        
+        #endregion
     }
 }

@@ -22,11 +22,24 @@ namespace SurveillanceTempsReel.Actors
 
     public class Stat
     {
-        public string Series { get; private set; }
-
+        public int HospitalId { get; private set; }
+        public StatisticType Statistic { get; private set; }
         public double CounterValue { get; private set; }
 
-        public Stat( string series, double counterValue )
+        public Stat( int hospitalId, StatisticType stat, double counterValue )
+        {
+            HospitalId = hospitalId;
+            CounterValue = counterValue;
+            Statistic = stat;
+        }
+    }
+
+    public class SeriesStat
+    {
+        public string Series { get; private set; }
+        public double CounterValue { get; private set; }
+
+        public SeriesStat( string series, double counterValue )
         {
             CounterValue = counterValue;
             Series = series;

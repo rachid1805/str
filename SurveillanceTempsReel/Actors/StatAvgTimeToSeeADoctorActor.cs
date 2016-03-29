@@ -17,7 +17,7 @@ namespace SurveillanceTempsReel.Actors
         
         private readonly HashSet<IActorRef> _subscriptions;
 
-        private readonly ICancelable _cancelPublishing;
+        private ICancelable _cancelPublishing;
 
         private PerformanceCounter _counter;
         //private PerformanceCounter _baseCounter;
@@ -28,14 +28,17 @@ namespace SurveillanceTempsReel.Actors
 
         #endregion
 
+        #region Constructors
+
         public StatAvgTimeToSeeADoctorActor( Hospital hospital )
         {
             _hospital = hospital;
             _subscriptions = new HashSet<IActorRef>();
-            _cancelPublishing = new Cancelable( Context.System.Scheduler );
             
             Processing();
         }
+
+        #endregion
 
         #region Actor lifecycle methods
 
@@ -49,17 +52,19 @@ namespace SurveillanceTempsReel.Actors
             _patients = new Dictionary<int, DateTime>();
             _avgDuration = 0.0d;
             _statCount = 0;
+
+            _cancelPublishing = ScheduleGatherStatsTask();
         }
 
         protected override void PostStop()
         {
             try
             {
-                var average = _avgDuration;
                 _cancelPublishing.Cancel( false );
                 _counter.RawValue = 0;
                 _counter.Dispose();
                 //_baseCounter.Dispose();
+               
             }
             catch
             {
@@ -73,13 +78,14 @@ namespace SurveillanceTempsReel.Actors
 
         #endregion
 
+        #region Private methods
+
         private void Processing()
         {
-            // TODO : if we use PerfMon, remove this
-            Receive<GatherStats>( bof =>
+            Receive<GatherStats>( gs =>
             {
-                var stat = new Stat( StatisticType.AvgTimeToSeeADoctor.ToString(), _counter.NextValue() );
-                //var stat = new Stat(StatisticType.AvgTimeToSeeADoctor.ToString(), _avgMinutesToSeeADoctor);
+                var stat = new Stat( _hospital.Id, StatisticType.AvgTimeToSeeADoctor, _avgDuration );
+                //var stat = new Stat(StatisticType.AvgTimeToSeeADoctor, _counter.NextValue());
 
                 foreach ( var sub in _subscriptions )
                     sub.Tell( stat );
@@ -114,5 +120,30 @@ namespace SurveillanceTempsReel.Actors
                 }
             } );
         }
+
+        private void Publish( Stat stat )
+        {
+            foreach ( var s in _subscriptions )
+                s.Tell( stat );
+        }
+
+        /// <summary>
+        /// Cédule une tâche pour nous envoyer régulièrement un message
+        /// pour publier la statistique à jour de l'acteur
+        /// </summary>
+        /// <returns></returns>
+        private ICancelable ScheduleGatherStatsTask()
+        {
+            var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
+                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 1000 ),
+                Self,
+                new GatherStats(),
+                Self );
+
+            return cancellation;
+        }
+
+        #endregion
     }
 }

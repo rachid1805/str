@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
@@ -54,24 +55,28 @@ namespace SurveillanceTempsReel.Actors
 
         private int _statChartXPosCounter = 0;
 
-        private readonly Chart _statChart;
-        private Dictionary<string, Series> _statChartSeries;
+        private readonly DataTable _hospitalStatsDataTable;
 
         private readonly Button _pauseButton;
+
+        // TODO deprecated stuff
+        private readonly Chart _statChart;
+        private Dictionary<string, Series> _statChartSeries;
 
         #endregion
 
         #region Constructors
 
-        public DashboardActor( Button pauseButton ) : this( new Dictionary<string, Series>(), pauseButton )
+        public DashboardActor( DataTable hospitalStatsDataTable, Button pauseButton )
         {
-        }
-
-        public DashboardActor( Dictionary<string, Series> seriesIndex, Button pauseButton )
-        {
-            _statChart = new Chart();       // TODO : deprecated
-            _statChartSeries = seriesIndex;
+            _hospitalStatsDataTable = hospitalStatsDataTable;
             _pauseButton = pauseButton;
+
+            // TODO deprecated stuff
+            _statChart = new Chart();       
+            _statChartSeries = new Dictionary<string, Series>();
+            ///////////
+           
             Paused();
         }
 
@@ -81,10 +86,17 @@ namespace SurveillanceTempsReel.Actors
 
         private void Running()
         {
+            /* TODO DEPRECATED
             Receive<InitializeStatChart>( isc => HandleInitializeStatChart( isc ) );
             Receive<AddSeriesToStatChart>( addSeries => HandleAddSeriesToStatChart( addSeries ) );
             Receive<RemoveSeriesFromStatChart>( removeSeries => HandleRemoveSeriesFromStatChart( removeSeries ) );
-            Receive<Stat>( stat => HandleStats( stat ) );
+            Receive<SeriesStat>( stat => HandleSeriesStats( stat ) );
+            */
+
+            Receive<Stat>( stat =>
+            {
+                HandleStat( stat );
+            } );
 
             Receive<TogglePause>( pause =>
             {
@@ -99,9 +111,17 @@ namespace SurveillanceTempsReel.Actors
 
         private void Paused()
         {
+            /* TODO DEPRECATED
             Receive<AddSeriesToStatChart>( addSeries => Stash.Stash() );
             Receive<RemoveSeriesFromStatChart>( removeSeries => Stash.Stash() );
-            Receive<Stat>( stat => HandleStatPaused( stat ) );
+            Receive<SeriesStat>( stat => HandleStatPaused( stat ) );
+            */
+
+            Receive<Stat>( stat =>
+            {
+                HandleStat( stat );
+            } );
+
             Receive<TogglePause>( pause =>
             {
                 SetPauseButtonText( _pauseButton, paused: false );
@@ -115,6 +135,14 @@ namespace SurveillanceTempsReel.Actors
             } );
         }
 
+        private static void SetPauseButtonText( Button button, bool paused )
+        {
+            button.Text = string.Format( "{0}", !paused ? "ARRÊTER" : "DÉMARRER" );
+        }
+
+        /// <summary>
+        /// <DEPRECATED
+        /// </summary>
         private static void SetChartBoundaries( Chart chart, Dictionary<string, Series> series, int _statChartXPosCounter )
         {
             double maxAxisX, maxAxisY, minAxisX, minAxisY = 0.0d;
@@ -133,15 +161,46 @@ namespace SurveillanceTempsReel.Actors
                 area.AxisY.Maximum = maxAxisY;
             }
         }
-
-        private static void SetPauseButtonText( Button button, bool paused )
-        {
-            button.Text = string.Format( "{0}", !paused ? "ARRÊTER" : "DÉMARRER" );
-        }
-
+        
         #endregion
 
         #region Message handlers
+
+        private void HandleStat( Stat stat )
+        {
+            string filter = $"{Dashboard.HospitalIDColumnName}={stat.HospitalId}";
+
+            DataRow[] hospitalRows = _hospitalStatsDataTable.Select( filter );
+            // using unique id, so should only be 1 row
+            System.Diagnostics.Debug.Assert( hospitalRows.Length == 1 );
+
+            string columnNameToUpdate = string.Empty;
+            string numericFormat = "F2";
+
+            switch ( stat.Statistic )
+            {
+                case StatisticType.EstimatedTimeToSeeADoctor:
+                    columnNameToUpdate = Dashboard.EstimatedTimeToSeeADoctorColumnName;
+                    break;
+
+                case StatisticType.AvgTimeToSeeADoctor:
+                    columnNameToUpdate = Dashboard.AvgTimeToSeeADoctorColumnName;
+                    break;
+
+                case StatisticType.AvgAppointmentDuration:
+                    columnNameToUpdate = Dashboard.AvgAppointmentDurationColumnName;
+                    break;
+
+                case StatisticType.Illness:
+                    columnNameToUpdate = Dashboard.InfluenzaStatColumnName;
+                    break;
+
+                default:
+                    throw new ArgumentException( $"Unexpected StatisticType: {stat.Statistic}" );
+            }
+
+            hospitalRows[ 0 ][ columnNameToUpdate ] = stat.CounterValue.ToString( numericFormat );
+         }
 
         private void HandleInitializeStatChart( InitializeStatChart isc )
         {
@@ -192,7 +251,7 @@ namespace SurveillanceTempsReel.Actors
             }
         }
 
-        private void HandleStats( Stat stat )
+        private void HandleSeriesStats( SeriesStat stat )
         {
             if ( !string.IsNullOrEmpty( stat.Series ) && _statChartSeries.ContainsKey( stat.Series ) )
             {
@@ -203,7 +262,7 @@ namespace SurveillanceTempsReel.Actors
             }
         }
 
-        private void HandleStatPaused( Stat stat )
+        private void HandleStatPaused( SeriesStat stat )
         {
             if ( !string.IsNullOrEmpty( stat.Series ) && _statChartSeries.ContainsKey( stat.Series ) )
             {

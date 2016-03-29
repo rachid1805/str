@@ -17,7 +17,7 @@ namespace SurveillanceTempsReel.Actors
         
         private readonly HashSet<IActorRef> _subscriptions;
 
-        private readonly ICancelable _cancelPublishing;
+        private ICancelable _cancelPublishing;
 
         private PerformanceCounter _counter;
         //private PerformanceCounter _baseCounter;
@@ -26,14 +26,17 @@ namespace SurveillanceTempsReel.Actors
 
         #endregion
 
+        #region Constructors
+
         public StatDiseaseActor( Hospital hospital )
         {
             _hospital = hospital;
             _subscriptions = new HashSet<IActorRef>();
-            _cancelPublishing = new Cancelable( Context.System.Scheduler );
             
             Processing();
         }
+
+        #endregion
 
         #region Actor lifecycle methods
 
@@ -43,6 +46,8 @@ namespace SurveillanceTempsReel.Actors
             //_baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.Illness, _hospital.Id ), false );
             _counter.RawValue = 0;
             //_baseCounter.RawValue = 0;
+
+            _cancelPublishing = ScheduleGatherStatsTask();
         }
 
         protected override void PostStop()
@@ -65,11 +70,13 @@ namespace SurveillanceTempsReel.Actors
 
         #endregion
 
+        #region Private methods
+
         private void Processing()
         {
-            Receive<GatherStats>( bof =>
+            Receive<GatherStats>( gs =>
             {
-                var stat = new Stat( StatisticType.Illness.ToString(), _counter.NextValue() );
+                var stat = new Stat( _hospital.Id, StatisticType.Illness, _statCount );
 
                 foreach ( var sub in _subscriptions )
                     sub.Tell( stat );
@@ -95,5 +102,24 @@ namespace SurveillanceTempsReel.Actors
                 //_baseCounter.Increment();
             } );
         }
+
+        /// <summary>
+        /// Cédule une tâche pour nous envoyer régulièrement un message
+        /// pour publier la statistique à jour de l'acteur
+        /// </summary>
+        /// <returns></returns>
+        private ICancelable ScheduleGatherStatsTask()
+        {
+            var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
+                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 1000 ),
+                Self,
+                new GatherStats(),
+                Self );
+
+            return cancellation;
+        }
+
+        #endregion
     }
 }
