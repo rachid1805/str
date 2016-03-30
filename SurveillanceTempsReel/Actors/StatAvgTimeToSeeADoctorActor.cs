@@ -106,20 +106,29 @@ namespace SurveillanceTempsReel.Actors
 
             Receive<RegisterPatient>( rp =>   
             {
+                var sw = Stopwatch.StartNew();
                 _patients.Add( rp.PatientId, rp.ArrivalTime );
+                _log.Info( $"(H{_hospital.Id}) Registering patient with ID={rp.PatientId} took {sw.ElapsedTicks} ticks" );
             } );
 
             Receive<BeginAppointmentWithDoctor>(bawd =>
             {
+                var sw = Stopwatch.StartNew();
+
                 DateTime arrivalTime;
                 if ( _patients.TryGetValue( bawd.PatientId, out arrivalTime ) )
                 {
                     var duration = (long)(bawd.StartTime - arrivalTime).TotalMilliseconds;
                     _avgDuration = ((_avgDuration * _statCount) + duration) / (++_statCount);
+
+             
                     _counter.RawValue = (long)_avgDuration;
+                    
                     //_baseCounter.Increment();
 
                     _patients.Remove( bawd.PatientId );
+
+                    _log.Info( $"(H{_hospital.Id}) BeginAppointmentWithDoctor for patient ID={bawd.PatientId} took {sw.ElapsedTicks} ticks" );
                 }
             } );
         }

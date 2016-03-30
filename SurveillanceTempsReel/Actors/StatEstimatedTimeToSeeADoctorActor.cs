@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Akka.Actor;
+using Akka.Event;
 using Common.Entities;
 
 namespace SurveillanceTempsReel.Actors
@@ -27,7 +28,9 @@ namespace SurveillanceTempsReel.Actors
         private Dictionary<int, BeginAppointmentWithDoctor> _doctors;
         private double _avgDuration;
         private long _statCount;
-        private List<long> _remainingTimeToSeeADoctor; 
+        private List<long> _remainingTimeToSeeADoctor;
+
+        private readonly ILoggingAdapter _log = Context.GetLogger();
 
         #endregion
 
@@ -111,6 +114,8 @@ namespace SurveillanceTempsReel.Actors
 
             Receive<RegisterPatient>( rp =>   
             {
+                var sw = Stopwatch.StartNew();
+
                 _patients[rp.Disease.Priority].Add( rp.PatientId, rp );
 
                 //var stopwatch = Stopwatch.StartNew();
@@ -167,12 +172,13 @@ namespace SurveillanceTempsReel.Actors
                     }
                 }
 
-                //Console.WriteLine("StatEstimatedTimeToSeeADoctorActor.Processing: Elapsed time = {0} ms. Average time = {1}", stopwatch.ElapsedMilliseconds, _avgDuration);
-                //stopwatch.Stop();
+                _log.Info( $"(H{_hospital.Id}) RegisterPatient for patient ID={rp.PatientId} took {sw.ElapsedTicks} ticks" );
             } );
 
             Receive<BeginAppointmentWithDoctor>(bawd =>
             {
+                var sw = Stopwatch.StartNew();
+
                 if ((_doctors.Count >= _hospital.AssignedDoctors) && !_doctors.ContainsKey(bawd.DoctorId))
                 {
                     // Un nouveau quart de travail :)
@@ -185,10 +191,14 @@ namespace SurveillanceTempsReel.Actors
                 _doctors[bawd.DoctorId] = bawd;
 
                 RemovePatient(bawd.PatientId);
+
+                _log.Info( $"(H{_hospital.Id}) BeginAppointmentWithDoctor for patient ID={bawd.PatientId} took {sw.ElapsedTicks} ticks" );
             } );
 
             Receive<UnregisterPatient>(urp =>
             {
+                var sw = Stopwatch.StartNew();
+
                 foreach (var doctor in _doctors.Where(doctor => (doctor.Value != null) && doctor.Value.PatientId.Equals(urp.PatientId)))
                 {
                     _doctors[doctor.Key] = null;
@@ -196,7 +206,9 @@ namespace SurveillanceTempsReel.Actors
                 }
 
                 RemovePatient(urp.PatientId);
-            });
+
+                _log.Info( $"(H{_hospital.Id}) UnregisterPatient for patient ID={urp.PatientId} took {sw.ElapsedTicks} ticks" );
+            } );
         }
 
         /// <summary>

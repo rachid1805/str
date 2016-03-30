@@ -110,8 +110,11 @@ namespace SurveillanceTempsReel.Actors
                     _lastEventId = dbe.EventId;
                 }
 
-                sw.Stop();
+                //var beforeLog = sw.Elapsed;
                 _log.Info( $"(H{_hospital.Id}) Fetching and publishing {dbEvents.Count()} events took {sw.ElapsedMilliseconds} ms" );
+                //var afterLog = sw.Elapsed;
+
+                //_log.Info( $"(H{_hospital.Id}) Logging took {(afterLog - beforeLog).TotalMilliseconds} ms" );
             } );
 
             Receive<TogglePauseFetchingHospitalEvents>( togglePauseFetching =>
