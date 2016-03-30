@@ -27,6 +27,7 @@ namespace SurveillanceTempsReel.Actors
         private Dictionary<int, BeginAppointmentWithDoctor> _doctors;
         private double _avgDuration;
         private long _statCount;
+        private List<long> _remainingTimeToSeeADoctor; 
 
         #endregion
 
@@ -60,6 +61,7 @@ namespace SurveillanceTempsReel.Actors
             _doctors = new Dictionary<int, BeginAppointmentWithDoctor>();
             _avgDuration = 0.0d;
             _statCount = 0;
+            _remainingTimeToSeeADoctor = new List<long>(_hospital.AssignedDoctors);
 
             _cancelPublishing = ScheduleGatherStatsTask();
         }
@@ -120,29 +122,29 @@ namespace SurveillanceTempsReel.Actors
                 }
 
                 // Trier le temps d'occupation de tous les médecins
-                var remainingTimeDoctor = new List<long>(_doctors.Count);
+                _remainingTimeToSeeADoctor.Clear();
                 foreach (var doctor in _doctors)
                 {
                     var patient = doctor.Value;
                     if (patient == null)
                     {
                         // Médecin sans patient
-                        remainingTimeDoctor.Add(0);
+                        _remainingTimeToSeeADoctor.Add(0);
                     }
                     else
                     {
                         var diseaseInCharge = patient.Disease;
                         var requiredTimeForDisease = ConvertTimeToMilliSec(diseaseInCharge.RequiredTime, diseaseInCharge.TimeUnit);
-                        var elapsedTime = (DateTime.Now - patient.StartTime).Ticks;
+                        var elapsedTime = (DateTime.Now - patient.StartTime).TotalMilliseconds;
                         if (elapsedTime > requiredTimeForDisease)
                         {
                             // Le médecin a terminé avec ce patient
-                            remainingTimeDoctor.Add(0);
+                            _remainingTimeToSeeADoctor.Add(0);
                         }
                         else
                         {
                             // Le temps qui reste au médecin avant de se libérer
-                            remainingTimeDoctor.Add(requiredTimeForDisease - elapsedTime);
+                            _remainingTimeToSeeADoctor.Add((long) (requiredTimeForDisease - elapsedTime));
                         }
                     }
                 }
@@ -153,17 +155,15 @@ namespace SurveillanceTempsReel.Actors
                     foreach (var patient in _patients[diseasePriority])
                     {
                         // Trier la liste de temps d'ocuppation des médecins
-                        remainingTimeDoctor.Sort();
+                        _remainingTimeToSeeADoctor.Sort();
 
                         // Le premier médecin qui va se libérer
-                        var waitingTime = remainingTimeDoctor[0];
+                        var waitingTime = _remainingTimeToSeeADoctor[0];
                         _avgDuration = ((_avgDuration * _statCount) + waitingTime) / (++_statCount);
                         _counter.RawValue = (long)_avgDuration;
-                        //_counter.IncrementBy(remainingTimeDoctor[0]);
-                        //_baseCounter.Increment();
 
                         // Rajouter à ce médecin le temps d'occupation avec ce nouveau patient
-                        remainingTimeDoctor[0] += ConvertTimeToMilliSec(patient.Value.Disease.RequiredTime, patient.Value.Disease.TimeUnit);
+                        _remainingTimeToSeeADoctor[0] += ConvertTimeToMilliSec(patient.Value.Disease.RequiredTime, patient.Value.Disease.TimeUnit);
                     }
                 }
 

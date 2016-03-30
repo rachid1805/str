@@ -22,7 +22,8 @@ namespace SurveillanceTempsReel.Actors
         private PerformanceCounter _counter;
         //private PerformanceCounter _baseCounter;
 
-        private long _statCount;
+        private double _totalCount;
+        private double _influenzaCount;
 
         #endregion
 
@@ -76,7 +77,7 @@ namespace SurveillanceTempsReel.Actors
         {
             Receive<GatherStats>( gs =>
             {
-                var stat = new Stat( _hospital.Id, StatisticType.Illness, _statCount );
+                var stat = new Stat( _hospital.Id, StatisticType.Illness, (_influenzaCount * 100) / _totalCount);
 
                 foreach ( var sub in _subscriptions )
                     sub.Tell( stat );
@@ -97,9 +98,9 @@ namespace SurveillanceTempsReel.Actors
                 // Surveiller par exemple l'éclosion de l'influenza
                 if (rp.Disease.Id == DiseaseType.Influenza)
                 {
-                    _counter.RawValue = ++_statCount;
+                    _counter.RawValue = (long)(++_influenzaCount);
                 }
-                //_baseCounter.Increment();
+                ++_totalCount;
             } );
         }
 
