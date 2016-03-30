@@ -140,6 +140,9 @@ namespace SurveillanceTempsReel
 
                 dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceCounterName(StatisticType.EstimatedTimeToSeeADoctor, h.Id),
                     PerformanceCounterHelper.CounterEstimatedTimeToSeeADoctor, PerformanceCounterType.NumberOfItems64));
+
+                dc.Add( new CounterCreationData( $"(H{h.Id}) Messages par seconde pour {PerformanceCounterHelper.CounterAvgTimeToSeeADoctor}", 
+                    "Actor messages per second", PerformanceCounterType.RateOfCountsPerSecond64 ) );
             }
 
             // TODO il faut une categorie pour chaque calcul! (compteurs par calcul (categorie))

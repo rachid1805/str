@@ -22,6 +22,7 @@ namespace SurveillanceTempsReel.Actors
 
         private PerformanceCounter _counter;
         //private PerformanceCounter _baseCounter;
+        private PerformanceCounter _msgPerSecondCounter;
 
         private Dictionary<int, DateTime> _patients;
         private double _avgDuration;
@@ -51,7 +52,8 @@ namespace SurveillanceTempsReel.Actors
             //_baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), false );
             _counter.RawValue = 0;
             //_baseCounter.RawValue = 0;
-
+            _msgPerSecondCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, $"(H{_hospital.Id}) Messages par seconde pour {PerformanceCounterHelper.CounterAvgTimeToSeeADoctor}", false );
+            
             _patients = new Dictionary<int, DateTime>();
             _avgDuration = 0.0d;
             _statCount = 0;
@@ -67,7 +69,7 @@ namespace SurveillanceTempsReel.Actors
                 _counter.RawValue = 0;
                 _counter.Dispose();
                 //_baseCounter.Dispose();
-               
+                _msgPerSecondCounter.Dispose();
             }
             catch
             {
@@ -92,16 +94,22 @@ namespace SurveillanceTempsReel.Actors
 
                 foreach ( var sub in _subscriptions )
                     sub.Tell( stat );
+
+                _msgPerSecondCounter.RawValue++;
             } );
 
             Receive<SubscribeStatistic>( sc =>
             {
                 _subscriptions.Add( sc.Subscriber );
+
+                _msgPerSecondCounter.RawValue++;
             } );
 
             Receive<UnsubscribeStatistic>( uc =>
             {
                 _subscriptions.Remove( uc.Subscriber );
+
+                _msgPerSecondCounter.RawValue++;
             } );
 
             Receive<RegisterPatient>( rp =>   
@@ -109,6 +117,8 @@ namespace SurveillanceTempsReel.Actors
                 var sw = Stopwatch.StartNew();
                 _patients.Add( rp.PatientId, rp.ArrivalTime );
                 _log.Info( $"(H{_hospital.Id}) Registering patient with ID={rp.PatientId} took {sw.ElapsedTicks} ticks" );
+
+                _msgPerSecondCounter.RawValue++;
             } );
 
             Receive<BeginAppointmentWithDoctor>(bawd =>
@@ -130,6 +140,8 @@ namespace SurveillanceTempsReel.Actors
 
                     _log.Info( $"(H{_hospital.Id}) BeginAppointmentWithDoctor for patient ID={bawd.PatientId} took {sw.ElapsedTicks} ticks" );
                 }
+
+                _msgPerSecondCounter.RawValue++;
             } );
         }
 
