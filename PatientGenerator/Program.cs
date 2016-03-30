@@ -43,6 +43,7 @@ namespace PatientGenerator
             thread.Start();
 
             long _eventId = 0;
+            long iteration = 0;
 
             try
             {
@@ -130,7 +131,7 @@ namespace PatientGenerator
 
                     // Sleep the remaining time
                     Thread.Sleep((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) ? (int) (periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds) : 0);
-                    //Console.WriteLine("Elapsed Time = " + stopWatch.ElapsedMilliseconds + " ms");
+                    //s_logger.Trace("Elapsed Time in iteration {0} = {1} ms", ++iteration, stopWatch.ElapsedMilliseconds);
                     stopWatch.Stop();
                 }
             }
@@ -151,10 +152,6 @@ namespace PatientGenerator
                 var hospitalEventList = _hospitalEventDictionary[_listToInsertInDataBase];
                 stopWatch.Restart();
                 MedWatchDAL.InsertBulkHospitalEvents(hospitalEventList);
-                //Console.WriteLine("Generated and stored " + hospitalEventList.Count +
-                //                  " events in the database, elapsed time = " +
-                //                  _elapsedTimeDictionary[_listToInsertInDataBase] + " ms (DB Access = " +
-                //                  (dataBaseAccessAfter - dataBaseAccessBefore) + " ms)");
                 s_logger.Trace(
                     "Generated and stored {0} events in the database, elapsed time = {1} ms (Concurrent DB Access = {2} ms)",
                     hospitalEventList.Count, _elapsedTimeDictionary[_listToInsertInDataBase],

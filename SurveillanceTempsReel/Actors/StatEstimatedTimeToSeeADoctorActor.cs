@@ -177,31 +177,25 @@ namespace SurveillanceTempsReel.Actors
                 {
                     // Un nouveau quart de travail :)
                     _doctors.Clear();
+                    for (var diseasePriority = DiseasePriority.VeryHigh; diseasePriority < DiseasePriority.Invalid; ++diseasePriority)
+                    {
+                        _patients[diseasePriority].Clear();
+                    }
                 }
                 _doctors[bawd.DoctorId] = bawd;
 
-                for (var diseasePriority = DiseasePriority.VeryHigh; diseasePriority < DiseasePriority.Invalid; ++diseasePriority)
-                {
-                    var patientList = _patients[diseasePriority];
-                    if (patientList.ContainsKey(bawd.PatientId))
-                    {
-                        patientList.Remove(bawd.PatientId);
-                        break;
-                    }
-                }
+                RemovePatient(bawd.PatientId);
             } );
 
             Receive<UnregisterPatient>(urp =>
             {
-                //foreach (var doctor in _doctors.Where(doctor => doctor.Value.PatientId.Equals(urp.PatientId)))
-                foreach (var doctor in _doctors)
+                foreach (var doctor in _doctors.Where(doctor => (doctor.Value != null) && doctor.Value.PatientId.Equals(urp.PatientId)))
                 {
-                    if ((doctor.Value != null) && doctor.Value.PatientId.Equals(urp.PatientId))
-                    {
-                        _doctors[doctor.Key] = null;
-                        break;
-                    }
+                    _doctors[doctor.Key] = null;
+                    break;
                 }
+
+                RemovePatient(urp.PatientId);
             });
         }
 
@@ -242,6 +236,19 @@ namespace SurveillanceTempsReel.Actors
             }
 
             return timeMs;
+        }
+
+        private void RemovePatient(int patientId)
+        {
+            for (var diseasePriority = DiseasePriority.VeryHigh; diseasePriority < DiseasePriority.Invalid; ++diseasePriority)
+            {
+                var patientList = _patients[diseasePriority];
+                if (patientList.ContainsKey(patientId))
+                {
+                    patientList.Remove(patientId);
+                    break;
+                }
+            }
         }
         
         #endregion
