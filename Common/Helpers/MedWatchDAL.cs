@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using Common.Entities;
 using System.Data;
+using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Linq;
+using Common.Entities;
 
 namespace Common.Helpers
 {
@@ -15,7 +16,6 @@ namespace Common.Helpers
 
         public static void InsertBulkHospitalEvents(IEnumerable<IHospitalEvent> events)
         {
-            logger.Trace( "InsertBulkHospitalEvents called" );
             var sw = Stopwatch.StartNew();
 
             using (SqlConnection connection = new SqlConnection(ConnectionString))
@@ -57,12 +57,12 @@ namespace Common.Helpers
                 }
                 catch ( Exception ex )
                 {
-                    logger.Error( "ERROR: {0}", ex );
+                    logger.Error( "ERROR: {0}", ex.Message );
                 }
             }
 
             sw.Stop();
-            logger.Trace( "InsertBulkHospitalEvents completed in {0} ms", sw.ElapsedMilliseconds );
+            logger.Trace( "InsertBulkHospitalEvents: {0} events inserted in {1} ms", events.Count(), sw.ElapsedMilliseconds );
         }
 
         // TODO remove this
@@ -130,7 +130,7 @@ namespace Common.Helpers
             }
             catch ( Exception ex )
             {
-                Console.WriteLine(ex);
+                logger.Error( "ERROR: {0}", ex.Message );
             }
             finally
             {
@@ -140,8 +140,7 @@ namespace Common.Helpers
 
         public static IEnumerable<IHospitalEvent> FindHospitalEventsAfter( int hospitalId, long afterEventId, int maxEventCount )
         {
-            logger.Trace( "FindHospitalEventsAfter called" );
-            var sw = Stopwatch.StartNew();
+            //var sw = Stopwatch.StartNew();
 
             var events = new List<IHospitalEvent>();
             
@@ -197,11 +196,11 @@ namespace Common.Helpers
             }
             catch ( Exception ex )
             {
-                logger.Error( "ERROR: {0}", ex );
+                logger.Error( "ERROR: {0}", ex.Message );
             }
 
-            sw.Stop();
-            logger.Trace( "FindHospitalEventsAfter completed in {0} ms", sw.ElapsedMilliseconds );
+            //sw.Stop();
+            //logger.Trace( "FindHospitalEventsAfter: {0} events fetched in {1} ms", events.Count, sw.ElapsedMilliseconds );
 
             return events;
         }
@@ -242,7 +241,7 @@ namespace Common.Helpers
             }
             catch ( Exception ex )
             {
-                logger.Error( "ERROR: {0}", ex );
+                logger.Error( "ERROR: {0}", ex.Message );
             }
           
             return hospitals;
@@ -287,7 +286,7 @@ namespace Common.Helpers
             }
             catch (Exception ex)
             {
-                logger.Error( "ERROR: {0}", ex );
+                logger.Error( "ERROR: {0}", ex.Message );
             }
           
             return diseases;

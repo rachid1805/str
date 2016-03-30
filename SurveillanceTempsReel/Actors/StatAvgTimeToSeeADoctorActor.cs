@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Akka.Actor;
+using Akka.Event;
 using Common.Entities;
 
 namespace SurveillanceTempsReel.Actors
@@ -25,6 +26,8 @@ namespace SurveillanceTempsReel.Actors
         private Dictionary<int, DateTime> _patients;
         private double _avgDuration;
         private long _statCount;
+
+        private readonly ILoggingAdapter _log = Context.GetLogger();
 
         #endregion
 

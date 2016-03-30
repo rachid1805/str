@@ -47,8 +47,8 @@ namespace SurveillanceTempsReel
                 // TODO JS peut-etre laisser exception se propager jusqu'au client?
 
                 // TODO temp
-                // var hospitals = MedWatchDAL.FindHospitals();
-                var hospitals = new[] { MedWatchDAL.FindHospitals().First() };  
+                var hospitals = MedWatchDAL.FindHospitals();
+                //var hospitals = new[] { MedWatchDAL.FindHospitals().First() };  
                 
                 var hospitalStatsDataTable = CreateDataTableForHospitalStats( hospitals );
                 dataGridView.DataSource = hospitalStatsDataTable;
@@ -174,7 +174,7 @@ namespace SurveillanceTempsReel
                 row[ EstimatedTimeToSeeADoctorColumnName ] = 0.ToString("F2");
                 row[ AvgTimeToSeeADoctorColumnName ] = 0.ToString( "F2" );
                 row[ AvgAppointmentDurationColumnName ] = 0.ToString( "F2" );
-                row[ InfluenzaStatColumnName ] = 0;
+                row[ InfluenzaStatColumnName ] = 0.ToString( "F2" );
                 dataTable.Rows.Add( row );
             }
 

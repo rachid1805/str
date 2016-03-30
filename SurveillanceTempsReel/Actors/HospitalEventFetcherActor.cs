@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Akka.Actor;
 using Akka.Event;
@@ -16,7 +17,7 @@ namespace SurveillanceTempsReel.Actors
     {
         #region Fields and constants
 
-        private static readonly int MaxCountPerFetch = 1000;
+        private static readonly int MaxCountPerFetch = 25000;
 
         public IStash Stash { get; set; }
 
@@ -29,8 +30,8 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable _cancelFetching;
         
         private long _lastEventId;
-
-        private readonly ILoggingAdapter _log = Logging.GetLogger( Context );
+        
+        private readonly ILoggingAdapter _log = Context.GetLogger();
 
         #endregion
 
@@ -48,8 +49,6 @@ namespace SurveillanceTempsReel.Actors
 
         protected override void PreStart()
         {
-            _log.Debug( "PreStart" );
-
             _lastEventId = 0;           // TODO restore state
 
             _diseases = InitDiseases();
@@ -97,9 +96,12 @@ namespace SurveillanceTempsReel.Actors
 
             Receive<FetchHostpitalEvents>( fetch =>
             {
-                _log.Debug( $"Fetching hospital events after event id {_lastEventId}" );
-                var dbEvents = MedWatchDAL.FindHospitalEventsAfter( _hospital.Id, _lastEventId, MaxCountPerFetch );
+                _log.Debug( $"(H{_hospital.Id}) Fetching hospital events after event id {_lastEventId}" );
 
+                var sw = Stopwatch.StartNew();
+
+                var dbEvents = MedWatchDAL.FindHospitalEventsAfter( _hospital.Id, _lastEventId, MaxCountPerFetch );
+                
                 foreach ( var dbe in dbEvents )
                 {
                     var actorEvent = ConvertToActorEvent( dbe );
@@ -108,7 +110,8 @@ namespace SurveillanceTempsReel.Actors
                     _lastEventId = dbe.EventId;
                 }
 
-                _log.Debug( $"Number of events fetched: {dbEvents.Count()}" );
+                sw.Stop();
+                _log.Info( $"(H{_hospital.Id}) Fetching and publishing {dbEvents.Count()} events took {sw.ElapsedMilliseconds} ms" );
             } );
 
             Receive<TogglePauseFetchingHospitalEvents>( togglePauseFetching =>
@@ -177,7 +180,7 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable ScheduleFetchingTask()
         {
             var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
-                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 1000 ),           // TODO : tweak these numbers
                 TimeSpan.FromMilliseconds( 1000 ),
                 Self,
                 new FetchHostpitalEvents(),

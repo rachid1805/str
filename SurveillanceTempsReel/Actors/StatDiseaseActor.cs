@@ -77,6 +77,8 @@ namespace SurveillanceTempsReel.Actors
         {
             Receive<GatherStats>( gs =>
             {
+                if ( _totalCount == 0 ) return;
+
                 var stat = new Stat( _hospital.Id, StatisticType.Illness, (_influenzaCount * 100) / _totalCount);
 
                 foreach ( var sub in _subscriptions )
