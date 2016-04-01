@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Windows.Forms;
-using System.Windows.Forms.DataVisualization.Charting;
 using Akka.Actor;
-
 
 namespace SurveillanceTempsReel.Actors 
 {
@@ -12,36 +9,6 @@ namespace SurveillanceTempsReel.Actors
     {
         #region Message types
 
-        public class InitializeStatChart
-        {
-            public Dictionary<string, Series> InitialSeries { get; private set; }
-
-            public InitializeStatChart( Dictionary<string, Series> initialSeries )
-            {
-                InitialSeries = initialSeries;
-            }
-        }
-
-        public class AddSeriesToStatChart
-        {
-            public Series Series { get; private set; }
-
-            public AddSeriesToStatChart( Series series )
-            {
-                Series = series;
-            }
-        }
-
-        public class RemoveSeriesFromStatChart
-        {
-            public string SeriesName { get; private set; }
-
-            public RemoveSeriesFromStatChart( string seriesName )
-            {
-                SeriesName = seriesName;
-            }
-        }
-        
         public class TogglePause { }
 
         #endregion
@@ -66,7 +33,7 @@ namespace SurveillanceTempsReel.Actors
         {
             _hospitalStatsDataTable = hospitalStatsDataTable;
             _pauseButton = pauseButton;
-           
+
             Paused();
         }
 
@@ -116,7 +83,7 @@ namespace SurveillanceTempsReel.Actors
         {
             button.Text = string.Format( "{0}", !paused ? "ARRÊTER" : "DÉMARRER" );
         }
-        
+
         #endregion
 
         #region Message handlers
@@ -156,7 +123,7 @@ namespace SurveillanceTempsReel.Actors
 
             hospitalRows[ 0 ][ columnNameToUpdate ] = stat.CounterValue.ToString( numericFormat );
          }
-        
+
         #endregion
     }
 }

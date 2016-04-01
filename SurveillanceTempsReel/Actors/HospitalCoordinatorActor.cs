@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Windows.Forms.DataVisualization.Charting;
 using Akka.Actor;
 using Akka.Routing;
 using Common.Entities;
@@ -48,7 +50,7 @@ namespace SurveillanceTempsReel.Actors
             {
                 var actorStat1 = Context.ActorOf(Props.Create(() => new StatAvgTimeToSeeADoctorActor(_hospital)), ActorPaths.StatAvgTimeToSeeADoctorActorName);
                 _hospitalStatActors[StatisticType.AvgTimeToSeeADoctor] = actorStat1;
-
+                
                 // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
                 _hospitalStatActors[StatisticType.AvgTimeToSeeADoctor].Tell(new SubscribeStatistic(StatisticType.AvgTimeToSeeADoctor, _dashboardActor));
             }
@@ -65,8 +67,7 @@ namespace SurveillanceTempsReel.Actors
             {
                 var actorStat3 = Context.ActorOf(Props.Create(() => new StatDiseaseActor(_hospital)), ActorPaths.StatDiseaseActorName);
                 _hospitalStatActors[StatisticType.Illness] = actorStat3;
-
-                // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
+                
                 _hospitalStatActors[StatisticType.Illness].Tell(new SubscribeStatistic(StatisticType.Illness, _dashboardActor));
             }
 
@@ -74,8 +75,7 @@ namespace SurveillanceTempsReel.Actors
             {
                 var actorStat4 = Context.ActorOf(Props.Create(() => new StatEstimatedTimeToSeeADoctorActor(_hospital)), ActorPaths.StatEstimatedTimeToSeeADoctorActorName);
                 _hospitalStatActors[StatisticType.EstimatedTimeToSeeADoctor] = actorStat4;
-
-                // l'acteur de statistique doit publier ses données vers l'acteur du "dashboard"
+                
                 _hospitalStatActors[StatisticType.EstimatedTimeToSeeADoctor].Tell(new SubscribeStatistic(StatisticType.EstimatedTimeToSeeADoctor, _dashboardActor));
             }
 

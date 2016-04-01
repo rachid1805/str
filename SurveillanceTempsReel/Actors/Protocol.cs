@@ -33,19 +33,7 @@ namespace SurveillanceTempsReel.Actors
             Statistic = stat;
         }
     }
-
-    public class SeriesStat
-    {
-        public string Series { get; private set; }
-        public double CounterValue { get; private set; }
-
-        public SeriesStat( string series, double counterValue )
-        {
-            CounterValue = counterValue;
-            Series = series;
-        }
-    }
-
+    
     public class FetchHostpitalEvents { }
 
     public class TogglePauseFetchingHospitalEvents { }

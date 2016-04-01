@@ -126,9 +126,8 @@ namespace SurveillanceTempsReel.Actors
                     var duration = (long)(bawd.StartTime - arrivalTime).TotalMilliseconds;
                     _avgDuration = ((_avgDuration * _statCount) + duration) / (++_statCount);
 
-             
                     _counter.RawValue = (long)_avgDuration;
-
+                    
                     _patients.Remove( bawd.PatientId );
 
                     _log.Info( $"(H{_hospital.Id}) BeginAppointmentWithDoctor for patient ID={bawd.PatientId} took {sw.ElapsedTicks} ticks" );
@@ -152,7 +151,7 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable ScheduleGatherStatsTask()
         {
             var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
-                TimeSpan.FromMilliseconds( 2000 ),
+                TimeSpan.FromMilliseconds( 2000 ),           
                 TimeSpan.FromMilliseconds( 1000 ),
                 Self,
                 new GatherStats(),

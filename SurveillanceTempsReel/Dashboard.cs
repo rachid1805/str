@@ -42,12 +42,9 @@ namespace SurveillanceTempsReel
             {
                 btnPauseResume.Enabled = false;
                 this.Text = AppName;
-
-                // TODO JS peut-etre laisser exception se propager jusqu'au client?
-
-                // TODO temp
-                var hospitals = MedWatchDAL.FindHospitals();
                 
+                var hospitals = MedWatchDAL.FindHospitals();
+               
                 var hospitalStatsDataTable = CreateDataTableForHospitalStats( hospitals );
                 dataGridView.DataSource = hospitalStatsDataTable;
 
@@ -55,7 +52,7 @@ namespace SurveillanceTempsReel
                 
                 // initialization de l'acteur pour le tableau de bord
                 _dashboardActor = Program.MediWatchActors.ActorOf( Props.Create( () => new DashboardActor( hospitalStatsDataTable, btnPauseResume ) ), ActorPaths.DashboardActorName );
-                
+               
                 // initialization du commander
                 _commanderActor = Program.MediWatchActors.ActorOf( Props.Create( () => new MediWatchCommanderActor( hospitals, _dashboardActor ) ), ActorPaths.MediWatchCommanderActorName );
 
@@ -65,7 +62,6 @@ namespace SurveillanceTempsReel
             {
                 MessageBox.Show( $"While loading up dashboard: {ex.ToString()}", AppName, MessageBoxButtons.OK, MessageBoxIcon.Error );
             }
-            
         }
 
         private void Dashboard_FormClosing( object sender, FormClosingEventArgs e )
@@ -79,11 +75,11 @@ namespace SurveillanceTempsReel
         {
             _dashboardActor.Tell( new DashboardActor.TogglePause() );
         }
-
+        
         #endregion
 
         #region Private methods
-
+        
         private void InitPerformanceCounters( IEnumerable<Hospital> hospitals )
         {
             if ( PerformanceCounterCategory.Exists( PerformanceCounterHelper.MainCategory ) )
@@ -100,7 +96,7 @@ namespace SurveillanceTempsReel
 
                 dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceCounterName(StatisticType.Illness, h.Id),
                     PerformanceCounterHelper.CounterPerDisease, PerformanceCounterType.NumberOfItems64));
-
+                
                 dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgAppointmentDuration, h.Id ),
                     PerformanceCounterHelper.CounterAvgAppointmentDuration, PerformanceCounterType.NumberOfItems64 ) );
 
@@ -110,8 +106,7 @@ namespace SurveillanceTempsReel
                 dc.Add( new CounterCreationData( $"(H{h.Id}) Messages par seconde pour {PerformanceCounterHelper.CounterAvgTimeToSeeADoctor}", 
                     "Actor messages per second", PerformanceCounterType.RateOfCountsPerSecond64 ) );
             }
-
-            // TODO il faut une categorie pour chaque calcul! (compteurs par calcul (categorie))
+            
             PerformanceCounterCategory.Create( PerformanceCounterHelper.MainCategory, "Catégorie pour Système de surveillance médicale", PerformanceCounterCategoryType.SingleInstance, dc );
         }
 

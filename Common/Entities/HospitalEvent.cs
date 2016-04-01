@@ -55,7 +55,7 @@ namespace Common.Entities
         public int? DoctorId { get; set; }
     }
 
-    public class PatientArrival : IPatientArrival
+    public class PatientArrival : IPatientArrival 
     {
         #region Constructor
 
@@ -105,7 +105,7 @@ namespace Common.Entities
         #endregion
     }
 
-    public class PatientLeaving : IPatientLeaving
+    public class PatientLeaving : IPatientLeaving 
     {
         #region Constructor
 
