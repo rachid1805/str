@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using Common.Entities;
 using Common.Helpers;
@@ -42,18 +41,12 @@ namespace PatientGenerator
             var thread = new Thread(InsertEventsInDataBaseHandle);
             thread.Start();
 
-            long _eventId = 0;
-            long iteration = 0;
+            long eventId = 0;
 
             try
             {
                 var numberOfPatientsToGenerate = int.Parse(args[0]);
                 var periodOfTimeMilliSec = long.Parse(args[1]);
-
-                //foreach (var hospital in MedWatchDAL.FindHospitals())
-                //{
-                //    IList<IHospitalEvent> events = MedWatchDAL.FindHospitalEventsAfter(hospital.Id, 0).Where(hospitalEvent => hospitalEvent.EventType == HospitalEventType.PatientTakenInChargeByDoctor).ToList();
-                //}
 
                 var generator = new PatientGenerator();
                 var stopWatch = new Stopwatch();
@@ -62,7 +55,7 @@ namespace PatientGenerator
                 while (!(Console.KeyAvailable && (Console.ReadKey(true).Key == ConsoleKey.Escape)))
                 {
                     _listToPopulateWithEvents = (_listToInsertInDataBase == ListType.FirstList) ? ListType.SecondList : ListType.FirstList;
-                    var hospitalEventList = _hospitalEventDictionary[_listToPopulateWithEvents];//new List<HospitalEvent>();
+                    var hospitalEventList = _hospitalEventDictionary[_listToPopulateWithEvents];
                     var generatedPatientNb = 1;
                     stopWatch.Restart();
 
@@ -72,7 +65,7 @@ namespace PatientGenerator
                         var patient = generator.GeneratePatientArrival();
                         hospitalEventList.Add(new HospitalEvent
                         {
-                            EventId = _eventId++,
+                            EventId = eventId++,
                             PatiendId = patient.PatientId,
                             HospitalId = patient.HospitalId,
                             EventType = HospitalEventType.PatientArrival,
@@ -95,7 +88,7 @@ namespace PatientGenerator
                         {
                             hospitalEventList.Add(new HospitalEvent
                             {
-                                EventId = _eventId++,
+                                EventId = eventId++,
                                 PatiendId = patientTakenInCharge.PatientId,
                                 HospitalId = patientTakenInCharge.HospitalId,
                                 EventType = HospitalEventType.PatientTakenInChargeByDoctor,
@@ -114,7 +107,7 @@ namespace PatientGenerator
                         {
                             hospitalEventList.Add(new HospitalEvent
                             {
-                                EventId = _eventId++,
+                                EventId = eventId++,
                                 PatiendId = patientLeaving.PatientId,
                                 HospitalId = patientLeaving.HospitalId,
                                 EventType = HospitalEventType.PatientLeaving,
@@ -131,7 +124,6 @@ namespace PatientGenerator
 
                     // Sleep the remaining time
                     Thread.Sleep((stopWatch.ElapsedMilliseconds < periodOfTimeMilliSec) ? (int) (periodOfTimeMilliSec - stopWatch.ElapsedMilliseconds) : 0);
-                    //s_logger.Trace("Elapsed Time in iteration {0} = {1} ms", ++iteration, stopWatch.ElapsedMilliseconds);
                     stopWatch.Stop();
                 }
             }

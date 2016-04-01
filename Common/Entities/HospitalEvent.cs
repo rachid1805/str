@@ -71,10 +71,10 @@ namespace Common.Entities
 
         #region IPatientArrival implementation
 
-        public int PatientId { get; private set; }
-        public int HospitalId { get; private set; }
-        public DateTime ArrivalTime { get; private set; }
-        public Disease Disease { get; private set; }
+        public int PatientId { get; }
+        public int HospitalId { get;  }
+        public DateTime ArrivalTime { get; }
+        public Disease Disease { get; }
 
         #endregion
     }
@@ -96,11 +96,11 @@ namespace Common.Entities
 
         #region IPatientTakenInChargeByDoctor implementation
 
-        public int PatientId { get; private set; }
-        public int HospitalId { get; private set; }
-        public DateTime TakenInChargeByDoctorTime { get; private set; }
-        public int DoctorId { get; private set; }
-        public Disease Disease { get; private set; }
+        public int PatientId { get; }
+        public int HospitalId { get; }
+        public DateTime TakenInChargeByDoctorTime { get; }
+        public int DoctorId { get; }
+        public Disease Disease { get; }
 
         #endregion
     }
@@ -120,9 +120,9 @@ namespace Common.Entities
 
         #region IPatientLeaving implementation
 
-        public int PatientId { get; private set; }
-        public int HospitalId { get; private set; }
-        public DateTime LeavingTime { get; private set; }
+        public int PatientId { get; }
+        public int HospitalId { get;  }
+        public DateTime LeavingTime { get; }
 
         #endregion
     }

@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
-using System.Linq;
 using Common.Entities;
 
 namespace Common.Helpers
@@ -72,27 +70,33 @@ namespace Common.Helpers
 
                     using ( var cmd = new SqlCommand( "HospitalEventSelectCommand", conn ) )
                     {
-                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                        cmd.CommandType = CommandType.StoredProcedure;
 
-                        var param = new SqlParameter();
-                        param.ParameterName = "@HospitalId";
-                        param.Value = hospitalId;
-                        param.SqlDbType = System.Data.SqlDbType.Int;
+                        var param = new SqlParameter
+                        {
+                            ParameterName = "@HospitalId",
+                            Value = hospitalId,
+                            SqlDbType = SqlDbType.Int
+                        };
                         cmd.Parameters.Add( param );
 
-                        param = new SqlParameter();
-                        param.ParameterName = "@AfterEventId";
-                        param.Value = afterEventId;
-                        param.SqlDbType = System.Data.SqlDbType.BigInt;
+                        param = new SqlParameter
+                        {
+                            ParameterName = "@AfterEventId",
+                            Value = afterEventId,
+                            SqlDbType = SqlDbType.BigInt
+                        };
                         cmd.Parameters.Add( param );
 
-                        param = new SqlParameter();
-                        param.ParameterName = "@MaxEventCount";
-                        param.Value = maxEventCount;
-                        param.SqlDbType = System.Data.SqlDbType.Int;
+                        param = new SqlParameter
+                        {
+                            ParameterName = "@MaxEventCount",
+                            Value = maxEventCount,
+                            SqlDbType = SqlDbType.Int
+                        };
                         cmd.Parameters.Add(param);
 
-                        SqlDataReader dr = cmd.ExecuteReader();
+                        var dr = cmd.ExecuteReader();
 
                         while ( dr.Read() )
                         {
@@ -136,7 +140,7 @@ namespace Common.Helpers
 
                     using ( var cmd = new SqlCommand( sql, conn ) )
                     {
-                        cmd.CommandType = System.Data.CommandType.Text;
+                        cmd.CommandType = CommandType.Text;
 
                         var dr = cmd.ExecuteReader();
 
@@ -178,7 +182,7 @@ namespace Common.Helpers
 
                     using ( var cmd = new SqlCommand( sql, conn ) )
                     {
-                        cmd.CommandType = System.Data.CommandType.Text;
+                        cmd.CommandType = CommandType.Text;
 
                         var dr = cmd.ExecuteReader();
 
