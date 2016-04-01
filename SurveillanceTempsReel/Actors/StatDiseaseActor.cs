@@ -20,7 +20,6 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable _cancelPublishing;
 
         private PerformanceCounter _counter;
-        //private PerformanceCounter _baseCounter;
 
         private double _totalCount;
         private double _influenzaCount;
@@ -44,9 +43,7 @@ namespace SurveillanceTempsReel.Actors
         protected override void PreStart()
         {
             _counter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.Illness, _hospital.Id ), false );
-            //_baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.Illness, _hospital.Id ), false );
             _counter.RawValue = 0;
-            //_baseCounter.RawValue = 0;
 
             _cancelPublishing = ScheduleGatherStatsTask();
         }
@@ -57,7 +54,6 @@ namespace SurveillanceTempsReel.Actors
             {
                 _cancelPublishing.Cancel( false ); 
                 _counter.Dispose();
-                //_baseCounter.Dispose();
             }
             catch
             {
@@ -114,7 +110,7 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable ScheduleGatherStatsTask()
         {
             var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
-                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 2000 ),
                 TimeSpan.FromMilliseconds( 1000 ),
                 Self,
                 new GatherStats(),

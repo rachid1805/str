@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using Akka.Actor;
@@ -53,15 +52,11 @@ namespace SurveillanceTempsReel.Actors
 
         public IStash Stash { get; set; }
 
-        private int _statChartXPosCounter = 0;
+        private int _statChartXPosCounter;
 
         private readonly DataTable _hospitalStatsDataTable;
 
         private readonly Button _pauseButton;
-
-        // TODO deprecated stuff
-        private readonly Chart _statChart;
-        private Dictionary<string, Series> _statChartSeries;
 
         #endregion
 
@@ -71,11 +66,6 @@ namespace SurveillanceTempsReel.Actors
         {
             _hospitalStatsDataTable = hospitalStatsDataTable;
             _pauseButton = pauseButton;
-
-            // TODO deprecated stuff
-            _statChart = new Chart();       
-            _statChartSeries = new Dictionary<string, Series>();
-            ///////////
            
             Paused();
         }
@@ -86,13 +76,6 @@ namespace SurveillanceTempsReel.Actors
 
         private void Running()
         {
-            /* TODO DEPRECATED
-            Receive<InitializeStatChart>( isc => HandleInitializeStatChart( isc ) );
-            Receive<AddSeriesToStatChart>( addSeries => HandleAddSeriesToStatChart( addSeries ) );
-            Receive<RemoveSeriesFromStatChart>( removeSeries => HandleRemoveSeriesFromStatChart( removeSeries ) );
-            Receive<SeriesStat>( stat => HandleSeriesStats( stat ) );
-            */
-
             Receive<Stat>( stat =>
             {
                 HandleStat( stat );
@@ -111,12 +94,6 @@ namespace SurveillanceTempsReel.Actors
 
         private void Paused()
         {
-            /* TODO DEPRECATED
-            Receive<AddSeriesToStatChart>( addSeries => Stash.Stash() );
-            Receive<RemoveSeriesFromStatChart>( removeSeries => Stash.Stash() );
-            Receive<SeriesStat>( stat => HandleStatPaused( stat ) );
-            */
-
             Receive<Stat>( stat =>
             {
                 HandleStat( stat );
@@ -138,28 +115,6 @@ namespace SurveillanceTempsReel.Actors
         private static void SetPauseButtonText( Button button, bool paused )
         {
             button.Text = string.Format( "{0}", !paused ? "ARRÊTER" : "DÉMARRER" );
-        }
-
-        /// <summary>
-        /// <DEPRECATED
-        /// </summary>
-        private static void SetChartBoundaries( Chart chart, Dictionary<string, Series> series, int _statChartXPosCounter )
-        {
-            double maxAxisX, maxAxisY, minAxisX, minAxisY = 0.0d;
-            var allPoints = series.Values.SelectMany( s => s.Points ).ToList();
-            var yValues = allPoints.SelectMany( point => point.YValues ).ToList();
-            maxAxisX = _statChartXPosCounter;
-            minAxisX = _statChartXPosCounter - MaxPoints;
-            maxAxisY = yValues.Count > 0 ? Math.Ceiling( yValues.Max() ) : 1.0d;
-            minAxisY = yValues.Count > 0 ? Math.Floor( yValues.Min() ) : 0.0d;
-            if ( allPoints.Count > 2 )
-            {
-                var area = chart.ChartAreas[ 0 ];
-                area.AxisX.Minimum = minAxisX;
-                area.AxisX.Maximum = maxAxisX;
-                area.AxisY.Minimum = minAxisY;
-                area.AxisY.Maximum = maxAxisY;
-            }
         }
         
         #endregion
@@ -201,77 +156,6 @@ namespace SurveillanceTempsReel.Actors
 
             hospitalRows[ 0 ][ columnNameToUpdate ] = stat.CounterValue.ToString( numericFormat );
          }
-
-        private void HandleInitializeStatChart( InitializeStatChart isc )
-        {
-            if ( isc.InitialSeries != null )
-            {
-                _statChartSeries = isc.InitialSeries;
-            }
-            
-            _statChart.Series.Clear();
-
-            var area = _statChart.ChartAreas[ 0 ];
-            area.AxisX.IntervalType = DateTimeIntervalType.Number;
-            area.AxisY.IntervalType = DateTimeIntervalType.Number;
-
-            SetChartBoundaries( _statChart, _statChartSeries, _statChartXPosCounter );
-            
-            if ( _statChartSeries.Any() )
-            {
-                foreach ( var series in _statChartSeries )
-                {
-                    series.Value.Name = series.Key;
-                    _statChart.Series.Add( series.Value );
-                }
-            }
-
-            SetChartBoundaries( _statChart, _statChartSeries, _statChartXPosCounter );
-        }
-
-        private void HandleAddSeriesToStatChart( AddSeriesToStatChart series )
-        {
-            if ( !string.IsNullOrEmpty( series.Series.Name ) &&
-                !_statChartSeries.ContainsKey( series.Series.Name ) )
-            {
-                _statChartSeries.Add( series.Series.Name, series.Series );
-                _statChart.Series.Add( series.Series );
-                SetChartBoundaries( _statChart, _statChartSeries, _statChartXPosCounter );
-            }
-        }
-
-        private void HandleRemoveSeriesFromStatChart( RemoveSeriesFromStatChart series )
-        {
-            if ( !string.IsNullOrEmpty( series.SeriesName ) && _statChartSeries.ContainsKey( series.SeriesName ) )
-            {
-                var seriesToRemove = _statChartSeries[ series.SeriesName ];
-                _statChartSeries.Remove( series.SeriesName );
-                _statChart.Series.Remove( seriesToRemove );
-                SetChartBoundaries( _statChart, _statChartSeries, _statChartXPosCounter );
-            }
-        }
-
-        private void HandleSeriesStats( SeriesStat stat )
-        {
-            if ( !string.IsNullOrEmpty( stat.Series ) && _statChartSeries.ContainsKey( stat.Series ) )
-            {
-                var series = _statChartSeries[ stat.Series ];
-                series.Points.AddXY( _statChartXPosCounter++, stat.CounterValue );
-                while ( series.Points.Count > MaxPoints ) series.Points.RemoveAt( 0 );
-                SetChartBoundaries(_statChart, _statChartSeries, _statChartXPosCounter );
-            }
-        }
-
-        private void HandleStatPaused( SeriesStat stat )
-        {
-            if ( !string.IsNullOrEmpty( stat.Series ) && _statChartSeries.ContainsKey( stat.Series ) )
-            {
-                var series = _statChartSeries[ stat.Series ];
-                series.Points.AddXY( _statChartXPosCounter++, 0.0d ); 
-                while ( series.Points.Count > MaxPoints ) series.Points.RemoveAt( 0 );
-                SetChartBoundaries( _statChart, _statChartSeries, _statChartXPosCounter );
-            }
-        }
         
         #endregion
     }

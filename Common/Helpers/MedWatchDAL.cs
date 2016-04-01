@@ -10,15 +10,13 @@ namespace Common.Helpers
 {
     public static class MedWatchDAL
     {
-        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly NLog.Logger s_logger = NLog.LogManager.GetCurrentClassLogger();
 
         public static readonly string ConnectionString = @"Server=127.0.0.1;Database=MedWatch;Trusted_Connection=True;";
 
         public static void InsertBulkHospitalEvents(IEnumerable<IHospitalEvent> events)
         {
-            var sw = Stopwatch.StartNew();
-
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            using (var connection = new SqlConnection(ConnectionString))
             {
                 try
                 {
@@ -27,7 +25,7 @@ namespace Common.Helpers
                     using ( var bulkCopy = new SqlBulkCopy( ConnectionString ) )
                     {
                         // Create the data table
-                        DataTable table = new DataTable();
+                        var table = new DataTable();
                         table.Columns.Add( "Id", typeof( long ) );
                         table.Columns.Add( "HospitalId", typeof( int ) );
                         table.Columns.Add( "PatientId", typeof( int ) );
@@ -57,91 +55,13 @@ namespace Common.Helpers
                 }
                 catch ( Exception ex )
                 {
-                    logger.Error( "ERROR: {0}", ex.Message );
+                    s_logger.Error( "ERROR: {0}", ex.Message );
                 }
-            }
-
-            sw.Stop();
-            logger.Trace( "InsertBulkHospitalEvents: {0} events inserted in {1} ms", events.Count(), sw.ElapsedMilliseconds );
-        }
-
-        // TODO remove this
-        public static void InsertHospitalEvents( IEnumerable<IHospitalEvent> events )
-        {
-            SqlConnection conn = null;
-
-            try
-            {
-                conn = new SqlConnection( ConnectionString );
-                conn.Open();
-
-                // TODO : use SqlBulkCopy for batch insert
-                foreach ( var e in events )
-                {
-                    using ( var cmd = new SqlCommand( "HospitalEventInsertCommand", conn ) )
-                    {
-                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
-
-                        var param = new SqlParameter();
-                        param.ParameterName = "@HospitalId";
-                        param.Value = e.HospitalId;
-                        param.SqlDbType = System.Data.SqlDbType.Int;
-                        cmd.Parameters.Add( param );
-
-                        param = new SqlParameter();
-                        param.ParameterName = "@PatientId";
-                        param.Value = e.PatiendId;
-                        param.SqlDbType = System.Data.SqlDbType.Int;
-                        cmd.Parameters.Add( param );
-
-                        param = new SqlParameter();
-                        param.ParameterName = "@EventType";
-                        param.Value = Convert.ToInt16( e.EventType );
-                        param.SqlDbType = System.Data.SqlDbType.SmallInt;
-                        cmd.Parameters.Add( param );
-
-                        param = new SqlParameter();
-                        param.ParameterName = "@EventTimestamp";
-                        param.Value = e.EventTime;
-                        param.SqlDbType = System.Data.SqlDbType.DateTime2;
-                        cmd.Parameters.Add( param );
-
-                        param = new SqlParameter();
-                        param.ParameterName = "@DiseaseType";
-                        if ( e.DiseaseType.HasValue )
-                            param.Value = Convert.ToInt16( e.DiseaseType );
-                        else
-                            param.Value = DBNull.Value;
-                        param.SqlDbType = System.Data.SqlDbType.SmallInt;
-                        cmd.Parameters.Add( param );
-
-                        param = new SqlParameter();
-                        param.ParameterName = "@DoctorId";
-                        if ( e.DoctorId.HasValue )
-                            param.Value = e.DoctorId.Value;
-                        else
-                            param.Value = DBNull.Value;
-                        param.SqlDbType = System.Data.SqlDbType.Int;
-                        cmd.Parameters.Add( param );
-
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-            }
-            catch ( Exception ex )
-            {
-                logger.Error( "ERROR: {0}", ex.Message );
-            }
-            finally
-            {
-                conn.Close();
             }
         }
 
         public static IEnumerable<IHospitalEvent> FindHospitalEventsAfter( int hospitalId, long afterEventId, int maxEventCount )
         {
-            //var sw = Stopwatch.StartNew();
-
             var events = new List<IHospitalEvent>();
             
             try
@@ -196,11 +116,8 @@ namespace Common.Helpers
             }
             catch ( Exception ex )
             {
-                logger.Error( "ERROR: {0}", ex.Message );
+                s_logger.Error( "ERROR: {0}", ex.Message );
             }
-
-            //sw.Stop();
-            //logger.Trace( "FindHospitalEventsAfter: {0} events fetched in {1} ms", events.Count, sw.ElapsedMilliseconds );
 
             return events;
         }
@@ -209,7 +126,7 @@ namespace Common.Helpers
         {
             var hospitals = new List<Hospital>();
 
-            string sql = "SELECT Id, Name, AssignedDoctors FROM Hospital ORDER BY Name";
+            var sql = "SELECT Id, Name, AssignedDoctors FROM Hospital ORDER BY Name";
             
             try
             {
@@ -221,7 +138,7 @@ namespace Common.Helpers
                     {
                         cmd.CommandType = System.Data.CommandType.Text;
 
-                        SqlDataReader dr = cmd.ExecuteReader();
+                        var dr = cmd.ExecuteReader();
 
                         while ( dr.Read() )
                         {
@@ -241,7 +158,7 @@ namespace Common.Helpers
             }
             catch ( Exception ex )
             {
-                logger.Error( "ERROR: {0}", ex.Message );
+                s_logger.Error( "ERROR: {0}", ex.Message );
             }
           
             return hospitals;
@@ -251,7 +168,7 @@ namespace Common.Helpers
         {
             var diseases = new List<Disease>();
 
-            string sql = "SELECT Id, Name, Priority, RequiredTime, TimeUnit FROM Disease";
+            var sql = "SELECT Id, Name, Priority, RequiredTime, TimeUnit FROM Disease";
             
             try
             {
@@ -263,7 +180,7 @@ namespace Common.Helpers
                     {
                         cmd.CommandType = System.Data.CommandType.Text;
 
-                        SqlDataReader dr = cmd.ExecuteReader();
+                        var dr = cmd.ExecuteReader();
 
                         while ( dr.Read() )
                         {
@@ -286,7 +203,7 @@ namespace Common.Helpers
             }
             catch (Exception ex)
             {
-                logger.Error( "ERROR: {0}", ex.Message );
+                s_logger.Error( "ERROR: {0}", ex.Message );
             }
           
             return diseases;

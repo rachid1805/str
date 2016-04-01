@@ -85,7 +85,6 @@ namespace PatientGenerator
             // Free doctor ?
             if (_freeDoctors.All(doctor => doctor.Value.Count == 0))
             {
-                //s_logger.Trace("GeneratePatientTakenInChargeByDoctor() : No available doctor");
                 return null;
             }
 
@@ -100,7 +99,6 @@ namespace PatientGenerator
             }
             if ((patientList == null) || (patientList.Count == 0))
             {
-                //s_logger.Trace("GeneratePatientTakenInChargeByDoctor() : No waiting patient");
                 return null;
             }
 
@@ -150,7 +148,6 @@ namespace PatientGenerator
                         {
                             // Parsed all diseases and all patients
                             _stopWatch.Stop();
-                            //s_logger.Trace("GeneratePatientTakenInChargeByDoctor() : No available doctor for the waiting patients");
                             return null;
                         }
                         patientList = _patientsArrival[diseasePriority];
@@ -167,7 +164,6 @@ namespace PatientGenerator
         {
             if (_patientsTakenInChargeByDoctor.Count == 0)
             {
-                //s_logger.Trace("GeneratePatientLeaving() : No available patient in the TakenInChargeList");
                 return null;
             }
 

@@ -21,7 +21,6 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable _cancelPublishing;
 
         private PerformanceCounter _counter;
-        //private PerformanceCounter _baseCounter;
         private PerformanceCounter _msgPerSecondCounter;
 
         private Dictionary<int, DateTime> _patients;
@@ -49,9 +48,7 @@ namespace SurveillanceTempsReel.Actors
         protected override void PreStart()
         {
             _counter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), false );
-            //_baseCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName( StatisticType.AvgTimeToSeeADoctor, _hospital.Id ), false );
             _counter.RawValue = 0;
-            //_baseCounter.RawValue = 0;
             _msgPerSecondCounter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, $"(H{_hospital.Id}) Messages par seconde pour {PerformanceCounterHelper.CounterAvgTimeToSeeADoctor}", false );
             
             _patients = new Dictionary<int, DateTime>();
@@ -68,7 +65,6 @@ namespace SurveillanceTempsReel.Actors
                 _cancelPublishing.Cancel( false );
                 _counter.RawValue = 0;
                 _counter.Dispose();
-                //_baseCounter.Dispose();
                 _msgPerSecondCounter.Dispose();
             }
             catch
@@ -90,7 +86,6 @@ namespace SurveillanceTempsReel.Actors
             Receive<GatherStats>( gs =>
             {
                 var stat = new Stat( _hospital.Id, StatisticType.AvgTimeToSeeADoctor, _avgDuration );
-                //var stat = new Stat(StatisticType.AvgTimeToSeeADoctor, _counter.NextValue());
 
                 foreach ( var sub in _subscriptions )
                     sub.Tell( stat );
@@ -133,8 +128,6 @@ namespace SurveillanceTempsReel.Actors
 
              
                     _counter.RawValue = (long)_avgDuration;
-                    
-                    //_baseCounter.Increment();
 
                     _patients.Remove( bawd.PatientId );
 
@@ -159,7 +152,7 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable ScheduleGatherStatsTask()
         {
             var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
-                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 2000 ),
                 TimeSpan.FromMilliseconds( 1000 ),
                 Self,
                 new GatherStats(),

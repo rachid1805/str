@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Common.Entities
 {
@@ -59,7 +55,7 @@ namespace Common.Entities
         public int? DoctorId { get; set; }
     }
 
-    public class PatientArrival : IPatientArrival //TODO IHospitalEvent
+    public class PatientArrival : IPatientArrival
     {
         #region Constructor
 
@@ -83,7 +79,7 @@ namespace Common.Entities
         #endregion
     }
 
-    public class PatientTakenInChargeByDoctor : IPatientTakenInChargeByDoctor // TODO IHospitalEvent
+    public class PatientTakenInChargeByDoctor : IPatientTakenInChargeByDoctor
     {
         #region Constructor
 
@@ -109,7 +105,7 @@ namespace Common.Entities
         #endregion
     }
 
-    public class PatientLeaving : IPatientLeaving  // TODO IHospitalEvent
+    public class PatientLeaving : IPatientLeaving
     {
         #region Constructor
 

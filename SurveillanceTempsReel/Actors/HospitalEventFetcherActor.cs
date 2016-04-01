@@ -22,11 +22,10 @@ namespace SurveillanceTempsReel.Actors
         public IStash Stash { get; set; }
 
         private readonly Hospital _hospital;
-        private readonly string _connectionString;
 
         private Dictionary<DiseaseType, Disease> _diseases;
 
-        private HashSet<IActorRef> _subscriptions;
+        private readonly HashSet<IActorRef> _subscriptions;
         private ICancelable _cancelFetching;
         
         private long _lastEventId;
@@ -35,10 +34,9 @@ namespace SurveillanceTempsReel.Actors
 
         #endregion
 
-        public HospitalEventFetcherActor( Hospital hospital , string connectionString )
+        public HospitalEventFetcherActor( Hospital hospital )
         {
             _hospital = hospital;
-            _connectionString = connectionString;
             _subscriptions = new HashSet<IActorRef>();
             _diseases = new Dictionary<DiseaseType, Disease>();
 
@@ -53,14 +51,6 @@ namespace SurveillanceTempsReel.Actors
 
             _diseases = InitDiseases();
         }
-
-        // TODO : this is a good place to (see p.76):
-        // - stash messages?
-        // - save _lastEventId ?
-        //protected override void PreRestart( Exception reason, object message )
-        //{
-        //    base.PreRestart( reason, message );
-        //}
 
         protected override void PostStop()
         {
@@ -183,7 +173,7 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable ScheduleFetchingTask()
         {
             var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
-                TimeSpan.FromMilliseconds( 1000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 1000 ),
                 TimeSpan.FromMilliseconds( 1000 ),
                 Self,
                 new FetchHostpitalEvents(),

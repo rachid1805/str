@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows.Forms;
 using Akka.Actor;
 using Common.Entities;
@@ -48,7 +47,6 @@ namespace SurveillanceTempsReel
 
                 // TODO temp
                 var hospitals = MedWatchDAL.FindHospitals();
-                //var hospitals = new[] { MedWatchDAL.FindHospitals().First() };  
                 
                 var hospitalStatsDataTable = CreateDataTableForHospitalStats( hospitals );
                 dataGridView.DataSource = hospitalStatsDataTable;
@@ -57,8 +55,7 @@ namespace SurveillanceTempsReel
                 
                 // initialization de l'acteur pour le tableau de bord
                 _dashboardActor = Program.MediWatchActors.ActorOf( Props.Create( () => new DashboardActor( hospitalStatsDataTable, btnPauseResume ) ), ActorPaths.DashboardActorName );
-                //_dashboardActor.Tell( new DashboardActor.InitializeStatChart( null ) );       // TODO deprecated
-
+                
                 // initialization du commander
                 _commanderActor = Program.MediWatchActors.ActorOf( Props.Create( () => new MediWatchCommanderActor( hospitals, _dashboardActor ) ), ActorPaths.MediWatchCommanderActorName );
 
@@ -83,29 +80,9 @@ namespace SurveillanceTempsReel
             _dashboardActor.Tell( new DashboardActor.TogglePause() );
         }
 
-        // TODO DEPRECATED
-        //private void comboHospitals_SelectedIndexChanged( object sender, EventArgs e )
-        //{
-        //    var selectedHospital = comboHospitals.SelectedItem as Hospital;
-        //    //if ( selectedHospital != null )
-        //    //    // TODO
-        //}
-
         #endregion
 
         #region Private methods
-
-        // TODO DEPRECATED
-        //private void LoadHospitalComboBox( IEnumerable<Hospital> hospitals )
-        //{
-        //    foreach ( var h in hospitals )
-        //    {
-        //        comboHospitals.Items.Add( h );
-        //    }
-
-        //    if ( comboHospitals.Items.Count > 0 )
-        //        comboHospitals.SelectedIndex = 0;
-        //}
 
         private void InitPerformanceCounters( IEnumerable<Hospital> hospitals )
         {
@@ -121,22 +98,11 @@ namespace SurveillanceTempsReel
                 dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgTimeToSeeADoctor, h.Id ),
                     PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.NumberOfItems64) );
 
-                //dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.AvgTimeToSeeADoctor, h.Id),
-                //    PerformanceCounterHelper.CounterAvgTimeToSeeADoctor, PerformanceCounterType.AverageBase));
-
                 dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceCounterName(StatisticType.Illness, h.Id),
                     PerformanceCounterHelper.CounterPerDisease, PerformanceCounterType.NumberOfItems64));
 
-                //dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.Illness, h.Id),
-                //    PerformanceCounterHelper.CounterPerDisease, PerformanceCounterType.RawBase));
-
-                // TODO ajouter autres compteurs
-
                 dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgAppointmentDuration, h.Id ),
                     PerformanceCounterHelper.CounterAvgAppointmentDuration, PerformanceCounterType.NumberOfItems64 ) );
-
-                //dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.AvgAppointmentDuration, h.Id),
-                //    PerformanceCounterHelper.CounterAvgAppointmentDuration, PerformanceCounterType.AverageBase));
 
                 dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceCounterName(StatisticType.EstimatedTimeToSeeADoctor, h.Id),
                     PerformanceCounterHelper.CounterEstimatedTimeToSeeADoctor, PerformanceCounterType.NumberOfItems64));

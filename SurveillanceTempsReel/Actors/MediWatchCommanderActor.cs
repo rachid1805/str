@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using Common.Entities;
 using Akka.Actor;
 
@@ -10,9 +8,9 @@ namespace SurveillanceTempsReel.Actors
     {
         #region Fields and constants
 
-        private IActorRef _dashboardActor;
+        private readonly IActorRef _dashboardActor;
         
-        private Dictionary<int, IActorRef> _hospitalCoordinatorActors;   // maps hospital id -> actor ref
+        private readonly Dictionary<int, IActorRef> _hospitalCoordinatorActors;   // maps hospital id -> actor ref
 
         #endregion
 

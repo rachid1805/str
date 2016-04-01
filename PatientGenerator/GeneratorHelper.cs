@@ -1,50 +1,47 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace PatientGenerator
 {
-  public static class GeneratorHelper
-  {
-    private static Random random = new Random();
-
-    public static string RandomUpperChars(int length)
+    public static class GeneratorHelper
     {
-      return "ABCDEFGHIJKLMNOPQRSTUVWXYZ".Random(length);
+        private static readonly Random s_random = new Random();
+
+        public static string RandomUpperChars(int length)
+        {
+            return "ABCDEFGHIJKLMNOPQRSTUVWXYZ".Random(length);
+        }
+
+        public static string RandomLowerChars(int length)
+        {
+            return "abcdefghijklmnopqrstuvwxyz".Random(length);
+        }
+
+        public static string RandomNumericalChars(int length)
+        {
+            return "0123456789".Random(length);
+        }
+
+        public static int RandomNumericalValue(int maxLength)
+        {
+            return s_random.Next(maxLength);
+        }
+
+        public static int RandomNumericalValue(int minValue, int maxValue)
+        {
+            return s_random.Next(minValue, maxValue);
+        }
+
+        private static string Random(this string chars, int length)
+        {
+            var randomString = new StringBuilder();
+
+            for (var i = 0; i < length; i++)
+            {
+                randomString.Append(chars[s_random.Next(chars.Length)]);
+            }
+
+            return randomString.ToString();
+        }
     }
-
-    public static string RandomLowerChars(int length)
-    {
-      return "abcdefghijklmnopqrstuvwxyz".Random(length);
-    }
-
-    public static string RandomNumericalChars(int length)
-    {
-      return "0123456789".Random(length);
-    }
-
-    public static int RandomNumericalValue(int maxLength)
-    {
-      return random.Next(maxLength);
-    }
-
-    public static int RandomNumericalValue(int minValue, int maxValue)
-    {
-      return random.Next(minValue, maxValue);
-    }
-
-    private static string Random(this string chars, int length)
-    {
-      var randomString = new StringBuilder();
-
-      for (int i = 0; i < length; i++)
-      {
-        randomString.Append(chars[random.Next(chars.Length)]);
-      }
-
-      return randomString.ToString();
-    }
-  }
 }

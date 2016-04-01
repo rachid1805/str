@@ -1,5 +1,4 @@
 ﻿
-
 namespace Common.Entities
 {
     public class Hospital

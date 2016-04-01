@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Akka.Actor;
 using Common.Entities;
 
@@ -18,7 +17,6 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable _cancelPublishing;
 
         private PerformanceCounter _counter;
-        //private PerformanceCounter _baseCounter;
 
         private Dictionary<int, DateTime> _patients;
         private double _avgDuration;
@@ -43,7 +41,6 @@ namespace SurveillanceTempsReel.Actors
         protected override void PreStart()
         {
             _counter = new PerformanceCounter( PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgAppointmentDuration, _hospital.Id ), false);
-            //_baseCounter = new PerformanceCounter(PerformanceCounterHelper.MainCategory, PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.AvgAppointmentDuration, _hospital.Id), false);
             _counter.RawValue = 0;
 
             _patients = new Dictionary<int, DateTime>();
@@ -108,7 +105,6 @@ namespace SurveillanceTempsReel.Actors
                     var duration = (long) (urp.LeavingTime - startTime).TotalMilliseconds;
                     _avgDuration = ((_avgDuration * _statCount) + duration) / (++_statCount);
                     _counter.RawValue = (long) _avgDuration;
-                    //_baseCounter.Increment();
 
                     _patients.Remove(urp.PatientId);
                 }
@@ -123,7 +119,7 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable ScheduleGatherStatsTask()
         {
             var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
-                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 2000 ),
                 TimeSpan.FromMilliseconds( 1000 ),
                 Self,
                 new GatherStats(),
