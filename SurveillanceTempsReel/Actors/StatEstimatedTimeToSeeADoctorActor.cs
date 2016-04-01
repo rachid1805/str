@@ -117,9 +117,7 @@ namespace SurveillanceTempsReel.Actors
                 var sw = Stopwatch.StartNew();
 
                 _patients[rp.Disease.Priority].Add( rp.PatientId, rp );
-
-                //var stopwatch = Stopwatch.StartNew();
-
+                
                 if (_doctors.Count == 0)
                 {
                     // Aucun docteur n'est encore enregistré, le temsp d'attente est indéfini
@@ -219,7 +217,7 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable ScheduleGatherStatsTask()
         {
             var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
-                TimeSpan.FromMilliseconds( 2000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 2000 ),           
                 TimeSpan.FromMilliseconds( 1000 ),
                 Self,
                 new GatherStats(),

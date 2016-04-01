@@ -49,7 +49,7 @@ namespace SurveillanceTempsReel.Actors
 
         protected override void PreStart()
         {
-            _lastEventId = 0;           // TODO restore state
+            _lastEventId = 0;           
 
             _diseases = InitDiseases();
         }
@@ -183,7 +183,7 @@ namespace SurveillanceTempsReel.Actors
         private ICancelable ScheduleFetchingTask()
         {
             var cancellation = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
-                TimeSpan.FromMilliseconds( 1000 ),           // TODO : tweak these numbers
+                TimeSpan.FromMilliseconds( 1000 ),           
                 TimeSpan.FromMilliseconds( 1000 ),
                 Self,
                 new FetchHostpitalEvents(),

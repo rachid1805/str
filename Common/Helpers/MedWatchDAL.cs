@@ -64,84 +64,9 @@ namespace Common.Helpers
             sw.Stop();
             logger.Trace( "InsertBulkHospitalEvents: {0} events inserted in {1} ms", events.Count(), sw.ElapsedMilliseconds );
         }
-
-        // TODO remove this
-        public static void InsertHospitalEvents( IEnumerable<IHospitalEvent> events )
-        {
-            SqlConnection conn = null;
-
-            try
-            {
-                conn = new SqlConnection( ConnectionString );
-                conn.Open();
-
-                // TODO : use SqlBulkCopy for batch insert
-                foreach ( var e in events )
-                {
-                    using ( var cmd = new SqlCommand( "HospitalEventInsertCommand", conn ) )
-                    {
-                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
-
-                        var param = new SqlParameter();
-                        param.ParameterName = "@HospitalId";
-                        param.Value = e.HospitalId;
-                        param.SqlDbType = System.Data.SqlDbType.Int;
-                        cmd.Parameters.Add( param );
-
-                        param = new SqlParameter();
-                        param.ParameterName = "@PatientId";
-                        param.Value = e.PatiendId;
-                        param.SqlDbType = System.Data.SqlDbType.Int;
-                        cmd.Parameters.Add( param );
-
-                        param = new SqlParameter();
-                        param.ParameterName = "@EventType";
-                        param.Value = Convert.ToInt16( e.EventType );
-                        param.SqlDbType = System.Data.SqlDbType.SmallInt;
-                        cmd.Parameters.Add( param );
-
-                        param = new SqlParameter();
-                        param.ParameterName = "@EventTimestamp";
-                        param.Value = e.EventTime;
-                        param.SqlDbType = System.Data.SqlDbType.DateTime2;
-                        cmd.Parameters.Add( param );
-
-                        param = new SqlParameter();
-                        param.ParameterName = "@DiseaseType";
-                        if ( e.DiseaseType.HasValue )
-                            param.Value = Convert.ToInt16( e.DiseaseType );
-                        else
-                            param.Value = DBNull.Value;
-                        param.SqlDbType = System.Data.SqlDbType.SmallInt;
-                        cmd.Parameters.Add( param );
-
-                        param = new SqlParameter();
-                        param.ParameterName = "@DoctorId";
-                        if ( e.DoctorId.HasValue )
-                            param.Value = e.DoctorId.Value;
-                        else
-                            param.Value = DBNull.Value;
-                        param.SqlDbType = System.Data.SqlDbType.Int;
-                        cmd.Parameters.Add( param );
-
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-            }
-            catch ( Exception ex )
-            {
-                logger.Error( "ERROR: {0}", ex.Message );
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
+        
         public static IEnumerable<IHospitalEvent> FindHospitalEventsAfter( int hospitalId, long afterEventId, int maxEventCount )
         {
-            //var sw = Stopwatch.StartNew();
-
             var events = new List<IHospitalEvent>();
             
             try
@@ -198,10 +123,7 @@ namespace Common.Helpers
             {
                 logger.Error( "ERROR: {0}", ex.Message );
             }
-
-            //sw.Stop();
-            //logger.Trace( "FindHospitalEventsAfter: {0} events fetched in {1} ms", events.Count, sw.ElapsedMilliseconds );
-
+            
             return events;
         }
 

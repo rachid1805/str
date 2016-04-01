@@ -59,7 +59,7 @@ namespace Common.Entities
         public int? DoctorId { get; set; }
     }
 
-    public class PatientArrival : IPatientArrival //TODO IHospitalEvent
+    public class PatientArrival : IPatientArrival 
     {
         #region Constructor
 
@@ -83,7 +83,7 @@ namespace Common.Entities
         #endregion
     }
 
-    public class PatientTakenInChargeByDoctor : IPatientTakenInChargeByDoctor // TODO IHospitalEvent
+    public class PatientTakenInChargeByDoctor : IPatientTakenInChargeByDoctor
     {
         #region Constructor
 
@@ -109,7 +109,7 @@ namespace Common.Entities
         #endregion
     }
 
-    public class PatientLeaving : IPatientLeaving  // TODO IHospitalEvent
+    public class PatientLeaving : IPatientLeaving 
     {
         #region Constructor
 

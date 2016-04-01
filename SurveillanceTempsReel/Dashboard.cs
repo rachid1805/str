@@ -43,13 +43,9 @@ namespace SurveillanceTempsReel
             {
                 btnPauseResume.Enabled = false;
                 this.Text = AppName;
-
-                // TODO JS peut-etre laisser exception se propager jusqu'au client?
-
-                // TODO temp
-                var hospitals = MedWatchDAL.FindHospitals();
-                //var hospitals = new[] { MedWatchDAL.FindHospitals().First() };  
                 
+                var hospitals = MedWatchDAL.FindHospitals();
+               
                 var hospitalStatsDataTable = CreateDataTableForHospitalStats( hospitals );
                 dataGridView.DataSource = hospitalStatsDataTable;
 
@@ -57,8 +53,7 @@ namespace SurveillanceTempsReel
                 
                 // initialization de l'acteur pour le tableau de bord
                 _dashboardActor = Program.MediWatchActors.ActorOf( Props.Create( () => new DashboardActor( hospitalStatsDataTable, btnPauseResume ) ), ActorPaths.DashboardActorName );
-                //_dashboardActor.Tell( new DashboardActor.InitializeStatChart( null ) );       // TODO deprecated
-
+               
                 // initialization du commander
                 _commanderActor = Program.MediWatchActors.ActorOf( Props.Create( () => new MediWatchCommanderActor( hospitals, _dashboardActor ) ), ActorPaths.MediWatchCommanderActorName );
 
@@ -68,7 +63,6 @@ namespace SurveillanceTempsReel
             {
                 MessageBox.Show( $"While loading up dashboard: {ex.ToString()}", AppName, MessageBoxButtons.OK, MessageBoxIcon.Error );
             }
-            
         }
 
         private void Dashboard_FormClosing( object sender, FormClosingEventArgs e )
@@ -82,31 +76,11 @@ namespace SurveillanceTempsReel
         {
             _dashboardActor.Tell( new DashboardActor.TogglePause() );
         }
-
-        // TODO DEPRECATED
-        //private void comboHospitals_SelectedIndexChanged( object sender, EventArgs e )
-        //{
-        //    var selectedHospital = comboHospitals.SelectedItem as Hospital;
-        //    //if ( selectedHospital != null )
-        //    //    // TODO
-        //}
-
+        
         #endregion
 
         #region Private methods
-
-        // TODO DEPRECATED
-        //private void LoadHospitalComboBox( IEnumerable<Hospital> hospitals )
-        //{
-        //    foreach ( var h in hospitals )
-        //    {
-        //        comboHospitals.Items.Add( h );
-        //    }
-
-        //    if ( comboHospitals.Items.Count > 0 )
-        //        comboHospitals.SelectedIndex = 0;
-        //}
-
+        
         private void InitPerformanceCounters( IEnumerable<Hospital> hospitals )
         {
             if ( PerformanceCounterCategory.Exists( PerformanceCounterHelper.MainCategory ) )
@@ -129,9 +103,7 @@ namespace SurveillanceTempsReel
 
                 //dc.Add(new CounterCreationData(PerformanceCounterHelper.GetPerformanceBaseCounterName(StatisticType.Illness, h.Id),
                 //    PerformanceCounterHelper.CounterPerDisease, PerformanceCounterType.RawBase));
-
-                // TODO ajouter autres compteurs
-
+                
                 dc.Add( new CounterCreationData( PerformanceCounterHelper.GetPerformanceCounterName( StatisticType.AvgAppointmentDuration, h.Id ),
                     PerformanceCounterHelper.CounterAvgAppointmentDuration, PerformanceCounterType.NumberOfItems64 ) );
 
@@ -144,8 +116,7 @@ namespace SurveillanceTempsReel
                 dc.Add( new CounterCreationData( $"(H{h.Id}) Messages par seconde pour {PerformanceCounterHelper.CounterAvgTimeToSeeADoctor}", 
                     "Actor messages per second", PerformanceCounterType.RateOfCountsPerSecond64 ) );
             }
-
-            // TODO il faut une categorie pour chaque calcul! (compteurs par calcul (categorie))
+            
             PerformanceCounterCategory.Create( PerformanceCounterHelper.MainCategory, "Catégorie pour Système de surveillance médicale", PerformanceCounterCategoryType.SingleInstance, dc );
         }
 
