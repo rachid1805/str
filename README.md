@@ -6,5 +6,6 @@ Système temps-réel (contraintes souples) utilisant une librairie d'acteurs pou
 Le projet comprend:
 - Un générateur aléatoire de patients
 - Système de surveillance (utilise la librairie d'acteurs Akka.NET)
+- Interface graphique
 
 
